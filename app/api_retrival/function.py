@@ -25,7 +25,30 @@ def get_session_indivdual_pre(year, round, session_num):
 
 def get_session(year, round):
     if year < 2018:
-        a = get_session_indivdual_pre(year=year, round=round, session_num=0)
+        a = get_session_indivdual_pre(year=year, round=round, session_num=5)
+        b = get_session_indivdual_pre(year=year, round=round, session_num=0)
+        a.rename(columns={
+            'driverNumber': 'DriverNumber',
+            'driverId': 'DriverId',
+            'position': 'RacePosition',
+            'constructorName': 'ConstructorName',
+            'driverNationality': 'CountryName',
+            'givenName': 'FirstName',
+            'familyName': 'LastName',
+            'points': 'Points',
+            'grid': 'GridPosition',
+            'laps': 'Laps',
+            'totalRaceTime': 'RaceTime',
+            'status': 'Status',
+        }, inplace=True)
+        a.drop(columns=['number', 'driverCode', 'driverUrl', 'dateOfBirth', 'constructorId', 'constructorUrl', 'positionText', 'constructorNationality', 'totalRaceTimeMillis', 'fastestLapRank'
+                        , 'fastestLapNumber', 'fastestLapNumber', 'fastestLapTime', 'fastestLapAvgSpeedUnits', 'fastestLapAvgSpeed', 'CountryName'], inplace=True)
+        b = b[['Q1', 'Q2', 'Q3', 'position', 'driverId']]
+        b.rename(columns={
+            'position':'QualifyingPosition',
+            'driverId':'DriverId',
+        }, inplace=True)
+        final = a.merge(b, on='DriverId', how='left')
     else:
         #4 is qual, 5 is race
         a = get_session_indivdual_post(year=year, round=round, session_num=5)
@@ -35,13 +58,12 @@ def get_session(year, round):
             'Position': 'RacePosition',
             'TeamName': 'ConstructorName'
         }, inplace=True)
-        a.drop(columns=['BroadcastName', 'Abbreviation', 'TeamColor', 'TeamId', 'FullName', 'HeadshotUrl', 'ClassifiedPosition', 'Q1', 'Q2', 'Q3'], inplace=True)
+        a.drop(columns=['BroadcastName', 'Abbreviation', 'TeamColor', 'TeamId', 'FullName', 'HeadshotUrl', 'ClassifiedPosition', 'Q1', 'Q2', 'Q3', 'CountryCode'], inplace=True)
         b = b[['Q1', 'Q2', 'Q3', 'Position', 'DriverId']]
         b.rename(columns={
             'Position':'QualifyingPosition'
         }, inplace=True)
         final = a.merge(b, on='DriverId', how='left')
-    print(b.columns)
-    print(b)
+    return final
 
-get_session(2019, 1)
+print(get_session(2016, 1).columns)
