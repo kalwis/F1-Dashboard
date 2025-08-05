@@ -28,9 +28,9 @@ def get_session_indivdual_pre(year, round, session_num):
 
     return a.content[0]
 
-
+#get any session, will return empty dataframe if it doesnt exist in the database or is invalid
 def get_session(year, round):
-    if year > datetime.now().year:
+    if year > datetime.now().year or year < 1950:
         return pd.DataFrame()
     
     if year < 2018:
