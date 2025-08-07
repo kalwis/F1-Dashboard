@@ -109,3 +109,7 @@ def get_session(year, round):
     return final
 
 
+
+
+
+print(get_session(2012, 2)["Points"])
