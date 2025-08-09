@@ -1,44 +1,49 @@
 import pandas as pd
 import session_retrival as fn
 
-def add_elo_rating(year, round, previous_elo):
+def add_elo_rating(year, round, previous_elo, elo_type):
     round_results = fn.get_session(year, round)
-    print(round_results)
+
     if len(previous_elo) == 0:
-        player_elo = round_results[["DriverId", "FirstName", "LastName",]]
+        player_elo = round_results[[elo_type, "FirstName", "LastName", "GridPosition"]]
         player_elo[round - 1] = 1000
         new_elo_frame = player_elo
     else:
         new_elo_frame = previous_elo
     new_elo_frame[round] = new_elo_frame[round - 1]
+    new_drivers_rows = check_new_drivers(round_results, previous_elo, elo_type)
+    if new_drivers_rows[1] == True:
+        new_elo_frame = pd.concat([new_elo_frame, new_drivers_rows[0]], ignore_index=True)
 
 
 
+    new_elo_frame = calculate_elo(round_results, elo_type, new_elo_frame, round)
 
-    if year < 2006 & year > 2002:
-        pass
-    elif year > 2005:
-        for _, player_A in round_results[["DriverId", "RacePosition"]].iterrows():
-            for _, player_B in round_results[["DriverId", "RacePosition"]].iterrows():
-                #need to add a way to add drivers to the ELO rating
-                
-                elo_A = new_elo_frame[new_elo_frame["DriverId"] == player_A["DriverId"]][round - 1].iloc[0]
-                elo_B = new_elo_frame[new_elo_frame["DriverId"] == player_B["DriverId"]][round - 1].iloc[0]
-                actual_result_A = determine_actual_Result(player_A["RacePosition"],player_B["RacePosition"] )
-                player_A_chance = determine_win_chance(elo_A, elo_B)
 
-                new_player_A_elo = 5*(actual_result_A - player_A_chance)
-
-                new_elo_frame.loc[new_elo_frame["DriverId"] == player_A["DriverId"], round] += new_player_A_elo
-
-                
-    elif year < 2003:
-        pass
     
+
+
     return new_elo_frame
 
-    
+def calculate_elo(round_results, elo_type, new_elo_frame, round):
+    for _, player_A in round_results[[elo_type, "RacePosition", "GridPosition"]].iterrows():
+        for _, player_B in round_results[[elo_type, "RacePosition", "GridPosition"]].iterrows():
 
+            
+            elo_A = new_elo_frame[new_elo_frame[elo_type] == player_A[elo_type]][round - 1].iloc[0]
+            elo_B = new_elo_frame[new_elo_frame[elo_type] == player_B[elo_type]][round - 1].iloc[0]
+            actual_result_A = determine_actual_Result(player_A["RacePosition"],player_B["RacePosition"] )
+            player_A_chance = determine_win_chance(elo_A, elo_B)
+ 
+            new_player_A_elo = calculate_k(player_A["GridPosition"], player_B["GridPosition"])*(actual_result_A - player_A_chance)
+
+            new_elo_frame.loc[new_elo_frame[elo_type] == player_A[elo_type], round] += new_player_A_elo
+    return new_elo_frame
+    
+def calculate_k(gridPositionA, gridPositionB):
+    k = 30
+    k += gridPositionA - gridPositionB
+    return k
 
 def determine_win_chance(elo_rating_A, elo_rating_B):
     exp1 = 1
@@ -56,25 +61,42 @@ def determine_actual_Result(rank_A, rank_B):
         return 0
     
 
-def check_new_drivers(session, existing_elo):
+def check_new_drivers(session, existing_elo, elo_type):
+        bol = False
+        all_new_rows = pd.DataFrame()
+        
+        if len(existing_elo) != 0:
+            for _, player_A in session[[elo_type]].iterrows():
+                if player_A.values[0] in existing_elo[elo_type].values:
+                    pass
+                else:
+                    new_row = pd.DataFrame()
+                    bol = True
+                    new_row[elo_type] = session[session[elo_type] == player_A.values[0]][elo_type]
+                    new_row["FirstName"] = session[session[elo_type] == player_A.values[0]]["FirstName"]
+                    new_row["LastName"] = session[session[elo_type] == player_A.values[0]]["LastName"]
+                    for i in existing_elo.columns:
+                        if i not in [elo_type, 'FirstName', 'LastName']:
+                            new_row[i] = 1000
+                    all_new_rows = pd.concat([all_new_rows, new_row], ignore_index=True)
 
-    for _, player_A in session[["DriverId"]].iterrows():
-            if player_A.values[0] not in session["DriverId"].values:
-                print("a")
-            else:
-                new_row = pd.DataFrame()
-                new_row["DriverId"] = player_A.values[0]
-                for i in session[session["DriverId"] == player_A.values[0]]["Q1"]:
-                    print(i)
+        
+        return all_new_rows, bol
                 
+                
+def get_season_elos(year, elo_type_id):
 
+    elo_types = ["DriverId", "ConstructorName", "Combined"]
+    j = pd.DataFrame()
+    round_count = fn.get_rounds_count(year)
+    for i in range(1,round_count):
+        
 
+        j = add_elo_rating(year, i, j, elo_types[elo_type_id]) 
 
-print(add_elo_rating(2006, 1, pd.DataFrame()))
-print(check_new_drivers(fn.get_session(2006,1), 1))
-#
-#j = pd.DataFrame()
-#for i in range(1,14):
-    
-    
- #   j = add_elo_rating(2007, i, j) 
+    if elo_type_id == 1:
+        j.drop(columns=['FirstName', 'LastName'], inplace=True)
+        j = j.drop_duplicates(subset=["ConstructorName"], keep="first")
+        
+    print(j)
+get_season_elos(1988,2)

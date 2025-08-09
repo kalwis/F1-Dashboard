@@ -112,4 +112,15 @@ def get_session(year, round):
 
 
 
-print(get_session(2012, 2)["Points"])
+def get_rounds_count(year):
+    if year < 2018:
+        circuits = Ergast().get_circuits(year)
+
+
+        return len(circuits)
+    else:
+        return max(fastf1.get_event_schedule(year)["RoundNumber"])
+
+
+
+            
