@@ -127,5 +127,4 @@ def get_season_elos(year):
     m.drop(columns=['ConstructorName', 'GridPosition'], inplace=True)
     player_elo.drop(columns=['GridPosition', 'ConstructorName'], inplace=True)
         
-    print((player_elo, j, m))
-get_season_elos(1988)
+
