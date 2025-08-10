@@ -6,10 +6,10 @@ An interactive Formula 1 data analytics platform designed to evaluate driver and
 
 **Team Name**: `S1_DS_03`  
 **Members**:
-- Isaac – Front-End Developer  
-- Joshua – Machine Learning Engineer  
-- Lohith – Backend & Database Engineer  
-- Ryan – Elo Algorithm & Model Design  
+- Isaac –   
+- Joshua –  
+- Lohith – 
+- Ryan – 
 - Kisara – Project Coordinator & Documentation Lead  
 
 ---
@@ -30,7 +30,7 @@ Formula 1 is a sport driven by both speed and data. While teams have access to d
 |--------------|----------------------|
 | Frontend     | React.js             |
 | Backend      | Python (FastAPI)     |
-| Database     | PostgreSQL           |
+| Database     |            |
 | ML Libraries | scikit-learn, pandas, numpy, xgboost |
 | Data Sources | FastF1, Jolpica API  |
 | Versioning   | Git + GitHub         |
@@ -79,11 +79,7 @@ The dashboard uses a modern, dark-themed interface with accessible colours and s
 ## 📊 Example Endpoints
 
 ```http
-GET /elo/driver
-GET /elo/constructor
-GET /predict/qualifying
-GET /predict/race
-GET /compare/headtohead
+
 ```
 
 Start the API locally with:
