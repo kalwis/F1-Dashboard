@@ -1,11 +1,11 @@
 import pandas as pd
 import session_retrival as fn
 
-def add_elo_rating(year, round, previous_elo, elo_type):
-    round_results = fn.get_session(year, round)
+def add_elo_rating(year, round, previous_elo, elo_type, k_modifiers, round_results):
+
 
     if len(previous_elo) == 0:
-        player_elo = round_results[[elo_type, "FirstName", "LastName", "GridPosition"]]
+        player_elo = round_results[["DriverId", "FirstName", "LastName", "ConstructorName", "GridPosition"]]
         player_elo[round - 1] = 1000
         new_elo_frame = player_elo
     else:
@@ -16,8 +16,8 @@ def add_elo_rating(year, round, previous_elo, elo_type):
         new_elo_frame = pd.concat([new_elo_frame, new_drivers_rows[0]], ignore_index=True)
 
 
+    new_elo_frame = calculate_elo(round_results, elo_type, new_elo_frame, round, k_modifiers)
 
-    new_elo_frame = calculate_elo(round_results, elo_type, new_elo_frame, round)
 
 
     
@@ -25,17 +25,24 @@ def add_elo_rating(year, round, previous_elo, elo_type):
 
     return new_elo_frame
 
-def calculate_elo(round_results, elo_type, new_elo_frame, round):
-    for _, player_A in round_results[[elo_type, "RacePosition", "GridPosition"]].iterrows():
-        for _, player_B in round_results[[elo_type, "RacePosition", "GridPosition"]].iterrows():
+def calculate_elo(round_results, elo_type, new_elo_frame, round, k_modifiers):
+    for _, player_A in round_results[["DriverId", "RacePosition", "GridPosition", "ConstructorName"]].iterrows():
+        for _, player_B in round_results[["DriverId", "RacePosition", "GridPosition", "ConstructorName"]].iterrows():
 
             
             elo_A = new_elo_frame[new_elo_frame[elo_type] == player_A[elo_type]][round - 1].iloc[0]
             elo_B = new_elo_frame[new_elo_frame[elo_type] == player_B[elo_type]][round - 1].iloc[0]
             actual_result_A = determine_actual_Result(player_A["RacePosition"],player_B["RacePosition"] )
             player_A_chance = determine_win_chance(elo_A, elo_B)
- 
-            new_player_A_elo = calculate_k(player_A["GridPosition"], player_B["GridPosition"])*(actual_result_A - player_A_chance)
+            #could make it so the big function passes in a k value (maybe not possible cos its diff, or maybe so the function passes in what to use to get k value)
+            a = 1
+            if k_modifiers is not None:
+                
+                k_modifiers = k_modifiers.drop_duplicates(subset=["ConstructorName"], keep="first")
+                
+                a = calculate_k_combined(actual_result_A, k_modifiers[k_modifiers["ConstructorName"] == player_A["ConstructorName"]][round].values[0], k_modifiers[k_modifiers["ConstructorName"] == player_B["ConstructorName"]][round].values[0]) 
+                
+            new_player_A_elo = (a*calculate_k(player_A["GridPosition"], player_B["GridPosition"]))*(actual_result_A - player_A_chance)
 
             new_elo_frame.loc[new_elo_frame[elo_type] == player_A[elo_type], round] += new_player_A_elo
     return new_elo_frame
@@ -43,7 +50,19 @@ def calculate_elo(round_results, elo_type, new_elo_frame, round):
 def calculate_k(gridPositionA, gridPositionB):
     k = 30
     k += gridPositionA - gridPositionB
+    #k += 7*calculate_k_combined(constructor_A, constructor_B)
     return k
+
+def calculate_k_combined(A_result, constructor_A, constructor_B):
+    if constructor_B == 0:
+        return(0)
+    k = (constructor_B - constructor_A)/(constructor_B) + 1
+    if A_result == 0 and k > 1: #this guy lost, and his car was worse
+        k = k-1
+    elif A_result == 0 and k < 1: #lost and car was deemed better eg k=0.3
+        k = k+1
+    return(k)
+
 
 def determine_win_chance(elo_rating_A, elo_rating_B):
     exp1 = 1
@@ -84,19 +103,29 @@ def check_new_drivers(session, existing_elo, elo_type):
         return all_new_rows, bol
                 
                 
-def get_season_elos(year, elo_type_id):
+def get_season_elos(year):
 
     elo_types = ["DriverId", "ConstructorName", "Combined"]
     j = pd.DataFrame()
+    m = pd.DataFrame()
+    player_elo = pd.DataFrame()
+
     round_count = fn.get_rounds_count(year)
+    
     for i in range(1,round_count):
-        
+        res = fn.get_session(year, i)
+        j = add_elo_rating(year, i, j, elo_types[1], None, res)
+        m = add_elo_rating(year, i, m, elo_types[0], j[["ConstructorName", i]], res) 
 
-        j = add_elo_rating(year, i, j, elo_types[elo_type_id]) 
+        player_elo = add_elo_rating(year, i, player_elo, elo_types[0], None, res) 
+    
 
-    if elo_type_id == 1:
-        j.drop(columns=['FirstName', 'LastName'], inplace=True)
-        j = j.drop_duplicates(subset=["ConstructorName"], keep="first")
+
+    j.drop(columns=['FirstName', 'LastName', 'DriverId', 'GridPosition'], inplace=True)
+    j = j.drop_duplicates(subset=["ConstructorName"], keep="first")
+
+    m.drop(columns=['ConstructorName', 'GridPosition'], inplace=True)
+    player_elo.drop(columns=['GridPosition', 'ConstructorName'], inplace=True)
         
-    print(j)
-get_season_elos(1988,2)
+    print((player_elo, j, m))
+get_season_elos(1988)
