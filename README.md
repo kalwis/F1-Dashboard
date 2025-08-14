@@ -1,88 +1,95 @@
-# 🏎️ F1 Analytics Dashboard – S1_DS_03
+# F1 Dashboard
 
-An interactive Formula 1 data analytics platform designed to evaluate driver and constructor performance using a custom Elo rating system and machine learning-based race predictions. Built using a Python backend (FastAPI), PostgreSQL database, and a React frontend, the dashboard brings deep data insights to fans, analysts, and developers.
+A comprehensive Formula 1 dashboard application with real-time data visualization and analysis.
 
-## 👥 Team Members
+## Architecture
 
-**Team Name**: `S1_DS_03`  
-**Members**:
-- Isaac –   
-- Joshua –  
-- Lohith – 
-- Ryan – 
-- Kisara – Project Coordinator & Documentation Lead  
+This application consists of:
+- **Backend**: Flask API server using the fastf1 library to fetch F1 data
+- **Frontend**: React application with modern UI components
 
----
+## Setup Instructions
 
-## 📌 Project Overview
+### Backend Setup
 
-Formula 1 is a sport driven by both speed and data. While teams have access to deep analytics, fans often rely only on basic stats like championship points. This dashboard aims to fill that gap by offering:
+1. **Install Python dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-- A fair, transparent **Elo-based ranking system** for both drivers and constructors
-- **Race and Qualifying predictions** using practice data and past performances
-- **Interactive visualisations** showing performance trends, comparisons, and predictions
+2. **Start the Flask API server:**
+   ```bash
+   cd app
+   python main.py
+   ```
+   
+   The API server will run on `http://localhost:5000`
 
----
+### Frontend Setup
 
-## 🔧 Tech Stack
+1. **Install Node.js dependencies:**
+   ```bash
+   cd frontend
+   npm install
+   ```
 
-| Layer        | Tool/Framework       |
-|--------------|----------------------|
-| Frontend     | React.js             |
-| Backend      | Python (FastAPI)     |
-| Database     |            |
-| ML Libraries | scikit-learn, pandas, numpy, xgboost |
-| Data Sources | FastF1, Jolpica API  |
-| Versioning   | Git + GitHub         |
+2. **Start the React development server:**
+   ```bash
+   npm start
+   ```
+   
+   The frontend will run on `http://localhost:3000`
 
----
+## API Endpoints
 
-## 🚀 Features
+The Flask backend provides the following endpoints:
 
-### ✅ Functional
-- **F1**: Main dashboard with rankings, predictions, and visualisations  
-- **F2**: Q3 Qualifying Prediction using practice, Q1, and Q2 data  
-- **F3**: Race Prediction using start grid + practice pace  
-- **F4**: Elo Ranking for Drivers and Cars (separate using one-vs-all logic)  
-- **F5**: Combined Elo for Driver-Car pairs using dynamic k-factors  
-- **F6**: Automatically updated daily PostgreSQL database  
-- **F7**: Graphs showing Elo rating changes over time  
-- **F8**: Head-to-head comparison of drivers or constructors  
+- `GET /api/driver-standings?year=current` - Get driver standings
+- `GET /api/constructor-standings?year=current` - Get constructor standings
+- `GET /api/season-schedule?year=current` - Get season schedule
+- `GET /api/race-results?year=current&round=1` - Get race results
+- `GET /api/qualifying-results?year=current&round=1` - Get qualifying results
+- `GET /api/drivers?year=current` - Get drivers list
+- `GET /api/constructors?year=current` - Get constructors list
+- `GET /api/circuits?year=current` - Get circuits list
+- `GET /api/health` - Health check
 
-### ⚙️ Non-Functional
-- **NF1**: High usability and responsive UI  
-- **NF2**: Reliable and synced to official race data  
-- **NF3**: Performance-optimized with quick loads (under 5s)  
-- **NF4**: Scalable architecture as seasons evolve  
+## Features
 
----
+- **Real-time F1 Data**: Live driver and constructor standings
+- **Race Results**: Latest race results and qualifying sessions
+- **Season Schedule**: Upcoming races and past events
+- **Interactive Charts**: Elo rating history and performance analytics
+- **Responsive Design**: Modern UI that works on all devices
 
-## 📈 Visual Highlights
+## Data Sources
 
-The dashboard uses a modern, dark-themed interface with accessible colours and scalable layout patterns (Z-pattern and F-pattern). Charts and tables are filterable by driver, constructor, or date, and update live via API queries.
+- **FastF1 Library**: Python library for accessing F1 data
+- **Ergast API**: Historical F1 data through fastf1's Ergast integration
 
----
+## Development
 
-## 🔄 System Architecture
+### Backend Development
+- The Flask API uses the fastf1 library to fetch data from the Ergast API
+- Data is cached to improve performance
+- CORS is enabled for frontend communication
 
-1. **Data Ingestion**: Fetched from FastF1 and Jolpica APIs  
-2. **Processing**: Cleaned, transformed, and analyzed using Python  
-3. **Storage**: Stored in PostgreSQL with 24-hour auto-updates  
-4. **Modelling**:
-   - Elo rating updates using a one-vs-all formula
-   - Race & Q3 predictions via ML models
-5. **API Layer**: FastAPI exposes endpoints for the frontend  
-6. **Frontend**: React-based UI shows graphs, tables, and comparisons
+### Frontend Development
+- React components use the fastf1Api service to communicate with the backend
+- Components include fallback data for offline scenarios
+- Modern UI with Tailwind CSS styling
 
----
+## Troubleshooting
 
-## 📊 Example Endpoints
+1. **Backend not starting**: Make sure all Python dependencies are installed
+2. **Frontend can't connect to API**: Ensure the Flask server is running on port 5000
+3. **No data loading**: Check the browser console for API errors
+4. **CORS issues**: The backend has CORS enabled, but check if the frontend URL is correct
 
-```http
+## Contributing
 
-```
-
-Start the API locally with:
-
-```bash
-uvicorn backend.main:app --reload
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test both backend and frontend
+5. Submit a pull request
