@@ -17,7 +17,7 @@ CACHE_DIR = 'fastf1_cache'
 os.makedirs(CACHE_DIR, exist_ok=True)
 fastf1.Cache.enable_cache(CACHE_DIR)
 
-DB_FILE = 'f1_data.db'
+DB_FILE = 'app/database/f1_data.db'
 
 
 # ==========================
