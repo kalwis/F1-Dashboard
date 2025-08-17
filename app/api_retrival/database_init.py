@@ -4,6 +4,7 @@ import fastf1
 from fastf1 import utils
 from datetime import datetime
 from fastf1.ergast import Ergast
+from session_retrival import get_session
 
 import pandas as pd
 
@@ -17,7 +18,7 @@ CACHE_DIR = 'fastf1_cache'
 os.makedirs(CACHE_DIR, exist_ok=True)
 fastf1.Cache.enable_cache(CACHE_DIR)
 
-DB_FILE = 'app/database/f1_data.db'
+DB_FILE = 'app/api_retrival/database/f1_data.db'
 
 
 # ==========================
@@ -47,9 +48,19 @@ def reset_tables():
         constructor_id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL
     );
+    
+    CREATE TABLE IF NOT EXISTS Constructor_Race (
+        constructor_race_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        constructor_id INTEGER NOT NULL,
+        year INTEGER NOT NULL,
+        round INTEGER NOT NULL,
+        elo REAL DEFAULT NULL,
+        FOREIGN KEY (constructor_id) REFERENCES Constructor(constructor_id),
+        UNIQUE(constructor_id, year, round)  -- prevents duplicates
+    );
 
     CREATE TABLE IF NOT EXISTS Race (
-        race_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        race_id INTEGER PRIMARY KEY AUTOINCREMENT, 
         year INTEGER NOT NULL,
         round INTEGER NOT NULL,
         name TEXT NOT NULL,
@@ -148,6 +159,15 @@ def insert_driver_race(conn, driver_id, constructor_id, race_id, q1, q2, q3, pos
     """, (driver_id, constructor_id, race_id, q1, q2, q3, position, points, elo))
     conn.commit()
 
+def insert_constructor_race(conn, constructor_id, year, round, elo):
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO Constructor_Race (constructor_id, year, round, elo)
+        VALUES (?, ?, ?, ?)
+    """, (constructor_id, year, round, elo))
+    conn.commit()
+
+
 
 def format_quali_time(val):
     if val is None or pd.isna(val):
@@ -159,77 +179,75 @@ def format_quali_time(val):
 # ==========================
 def populate_for_season(year):
     print(f"\n=== Processing {year} season ===")
-    schedule = fastf1.get_event_schedule(year, include_testing=False)
+    
+    # For schedules: use fastf1 if year >= 2018, otherwise Ergast
+    if year >= 2018:
+        schedule = fastf1.get_event_schedule(year, include_testing=False)
+    else:
+        schedule = Ergast().get_circuits(year)
+        schedule["RoundNumber"] = range(1, len(schedule) + 1)
+        schedule.rename(columns={"circuitName": "EventName", "locality": "Location"}, inplace=True)
+        schedule["EventDate"] = None  # Ergast doesnt provide event date reliably
 
     for _, event in schedule.iterrows():
         race_name = event['EventName']
         round_number = event['RoundNumber']
         circuit = event['Location']
-        race_date = event['EventDate'].strftime('%Y-%m-%d')
+        race_date = (
+            event['EventDate'].strftime('%Y-%m-%d') 
+            if 'EventDate' in event and pd.notnull(event['EventDate']) 
+            else None
+        )
 
         print(f"  -> {race_name} (Round {round_number})")
 
         conn = sqlite3.connect(DB_FILE)
         race_id = insert_race(conn, year, round_number, race_name, circuit, race_date)
 
-        # --- Load Qualifying ---
-        quali_results = None
-        try:
-            quali = fastf1.get_session(year, round_number, 'Qualifying')
-            quali.load()
-            quali_results = quali.results
-        except Exception:
-            pass
-
-        # --- Load Race ---
-        try:
-            race = fastf1.get_session(year, round_number, 'Race')
-            race.load()
-            race_results = race.results
-        except Exception:
-            race_results = None
-
-        if race_results is None:
+        # Use your unified get_session function
+        results = get_session(year, round_number)
+        if results.empty:
             conn.close()
             continue
-        
-        for _, row in race_results.iterrows():
-            print(row.get('HeadshotUrl'))
+
+        for _, row in results.iterrows():
             driver_id = insert_driver(
                 conn,
-                row['Abbreviation'],
-                row.get('FirstName', None),
-                row.get('LastName', None),
-                row.get('HeadshotUrl'),
-                row.get('CountryCode')
+                row.get('DriverId'),
+                row.get('FirstName'),
+                row.get('LastName'),
+                row.get('DriverUrl'),
+                row.get('CountryName')  # Ergast gives nationality
             )
-            constructor_id = insert_constructor(conn, row['TeamName'])
+            constructor_id = insert_constructor(conn, row['ConstructorName'])
+            insert_constructor_race(conn, constructor_id, year, round_number, None)
 
-            # pull qualifying times if available
-            q1 = q2 = q3 = None
-            if quali_results is not None and row['Abbreviation'] in quali_results['Abbreviation'].values:
-                qrow = quali_results[quali_results['Abbreviation'] == row['Abbreviation']].iloc[0]
-                q1 = format_quali_time(qrow.get('Q1', None))
-                q2 = format_quali_time(qrow.get('Q2', None))
-                q3 = format_quali_time(qrow.get('Q3', None))
+            q1 = format_quali_time(row.get('Q1')) if 'Q1' in row else None
+            q2 = format_quali_time(row.get('Q2')) if 'Q2' in row else None
+            q3 = format_quali_time(row.get('Q3')) if 'Q3' in row else None
 
-            position = row.get('Position', None)
-            points = row.get('Points', None)
+            position = row.get('RacePosition')
+            points = row.get('Points')
             elo = None
 
-            insert_driver_race(conn, driver_id, constructor_id, race_id, q1, q2, q3, position, points, elo)
+            insert_driver_race(
+                conn, driver_id, constructor_id, race_id,
+                q1, q2, q3, position, points, elo
+            )
 
         conn.close()
+
+
 
 
 
 if __name__ == "__main__":
     reset_tables()
     
-    for yr in range(2019, current_year + 1):
+    for yr in range(2008, current_year + 1):
         populate_for_season(yr)
 
-    print("\n Database populated for all seasons from 2019 onwards.")
-    
-    
+    print("\n Database populated for all seasons from 2008 onwards.")
+
+
     
