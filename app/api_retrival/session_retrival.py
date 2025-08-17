@@ -71,9 +71,10 @@ def get_session(year, round):
             ]]
         if year > 2002:
             b = get_session_indivdual_pre(year=year, round=round, session_num=0)
-            if "Q2" not in b.columns:
+            if "Q3" not in b.columns:
                 b["Q2"] = 0
                 b["Q3"] = 0
+            
             b = b[['Q1', 'Q2', 'Q3', 'position', 'driverId']]
             b.rename(columns={
                 'position':'QualifyingPosition',
