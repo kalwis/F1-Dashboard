@@ -49,4 +49,3 @@ def get_sql_session_driver(year):
         b = pd.concat([b, merge_player_elo_session(a, fn1.get_session(year, i))], ignore_index=True)
     return b
 
-print(get_sql_session_driver(1999))
