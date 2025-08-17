@@ -1,6 +1,5 @@
 import fastf1
 from fastf1.ergast import Ergast
-from datetime import datetime
 import pandas as pd
 
 def getRaces(year):
@@ -10,4 +9,8 @@ def getRaces(year):
     a["Year"] = year
     return a
 
-getRaces(1950)
+def all_races():
+    races = pd.DataFrame()
+    for i in range(1950, 2025):
+        races = pd.concat([races, getRaces(i)], ignore_index=True)
+    return races
