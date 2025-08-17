@@ -3,6 +3,7 @@ import sqlite3
 import fastf1
 from fastf1 import utils
 from datetime import datetime
+from fastf1.ergast import Ergast
 
 import pandas as pd
 
@@ -191,7 +192,7 @@ def populate_for_season(year):
         if race_results is None:
             conn.close()
             continue
-
+        
         for _, row in race_results.iterrows():
             print(row.get('HeadshotUrl'))
             driver_id = insert_driver(
@@ -229,3 +230,6 @@ if __name__ == "__main__":
         populate_for_season(yr)
 
     print("\n Database populated for all seasons from 2019 onwards.")
+    
+    
+    
