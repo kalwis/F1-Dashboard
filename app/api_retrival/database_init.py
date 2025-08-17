@@ -4,7 +4,7 @@ import fastf1
 from fastf1 import utils
 from datetime import datetime
 from fastf1.ergast import Ergast
-from session_retrival import get_session
+from combine_elo_session import get_sql_session_driver
 
 import pandas as pd
 
@@ -55,8 +55,7 @@ def reset_tables():
         year INTEGER NOT NULL,
         round INTEGER NOT NULL,
         elo REAL DEFAULT NULL,
-        FOREIGN KEY (constructor_id) REFERENCES Constructor(constructor_id),
-        UNIQUE(constructor_id, year, round)  -- prevents duplicates
+        FOREIGN KEY (constructor_id) REFERENCES Constructor(constructor_id)
     );
 
     CREATE TABLE IF NOT EXISTS Race (
@@ -179,63 +178,54 @@ def format_quali_time(val):
 # ==========================
 def populate_for_season(year):
     print(f"\n=== Processing {year} season ===")
-    
-    # For schedules: use fastf1 if year >= 2018, otherwise Ergast
-    if year >= 2018:
-        schedule = fastf1.get_event_schedule(year, include_testing=False)
-    else:
-        schedule = Ergast().get_circuits(year)
-        schedule["RoundNumber"] = range(1, len(schedule) + 1)
-        schedule.rename(columns={"circuitName": "EventName", "locality": "Location"}, inplace=True)
-        schedule["EventDate"] = None  # Ergast doesnt provide event date reliably
 
-    for _, event in schedule.iterrows():
-        race_name = event['EventName']
-        round_number = event['RoundNumber']
-        circuit = event['Location']
-        race_date = (
-            event['EventDate'].strftime('%Y-%m-%d') 
-            if 'EventDate' in event and pd.notnull(event['EventDate']) 
-            else None
-        )
+    # Get all driver results for the season in one go
+    results = get_sql_session_driver(year)
+    if results.empty:
+        print(f"No results for {year}")
+        return
+
+    conn = sqlite3.connect(DB_FILE)
+
+    # Group by round to process race info
+    for round_number, round_df in results.groupby("Round"):
+        race_name = round_df["EventName"].iloc[0] if "EventName" in round_df else f"Round {round_number}"
+        circuit = round_df["CircuitLocation"].iloc[0] if "CircuitLocation" in round_df else None
+        race_date = round_df["EventDate"].iloc[0] if "EventDate" in round_df else None
 
         print(f"  -> {race_name} (Round {round_number})")
 
-        conn = sqlite3.connect(DB_FILE)
         race_id = insert_race(conn, year, round_number, race_name, circuit, race_date)
 
-        # Use your unified get_session function
-        results = get_session(year, round_number)
-        if results.empty:
-            conn.close()
-            continue
-
-        for _, row in results.iterrows():
+        for _, row in round_df.iterrows():
             driver_id = insert_driver(
                 conn,
-                row.get('DriverId'),
-                row.get('FirstName'),
-                row.get('LastName'),
-                row.get('DriverUrl'),
-                row.get('CountryName')  # Ergast gives nationality
+                row.get("DriverId"),
+                row.get("FirstName"),
+                row.get("LastName"),
+                row.get("DriverUrl"),
+                row.get("CountryName")
             )
-            constructor_id = insert_constructor(conn, row['ConstructorName'])
-            insert_constructor_race(conn, constructor_id, year, round_number, None)
+            constructor_id = insert_constructor(conn, row["ConstructorName"])
 
-            q1 = format_quali_time(row.get('Q1')) if 'Q1' in row else None
-            q2 = format_quali_time(row.get('Q2')) if 'Q2' in row else None
-            q3 = format_quali_time(row.get('Q3')) if 'Q3' in row else None
+            # Insert constructor race (elo starts null unless provided)
+            insert_constructor_race(conn, constructor_id, year, round_number, row.get("ConstructorElo", None))
 
-            position = row.get('RacePosition')
-            points = row.get('Points')
-            elo = None
+            q1 = format_quali_time(row.get("Q1")) if "Q1" in row else None
+            q2 = format_quali_time(row.get("Q2")) if "Q2" in row else None
+            q3 = format_quali_time(row.get("Q3")) if "Q3" in row else None
+
+            position = row.get("RacePosition")
+            points = row.get("Points")
+            elo = row.get("DriverElo", None)
 
             insert_driver_race(
                 conn, driver_id, constructor_id, race_id,
                 q1, q2, q3, position, points, elo
             )
 
-        conn.close()
+    conn.close()
+
 
 
 
@@ -244,10 +234,10 @@ def populate_for_season(year):
 if __name__ == "__main__":
     reset_tables()
     
-    for yr in range(2008, current_year + 1):
+    """for yr in range(2008, current_year + 1):
         populate_for_season(yr)
 
-    print("\n Database populated for all seasons from 2008 onwards.")
+    print("\n Database populated for all seasons from 2008 onwards.")"""
 
-
+    populate_for_season(2008)
     
