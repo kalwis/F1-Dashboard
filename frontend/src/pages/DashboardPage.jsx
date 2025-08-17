@@ -37,7 +37,7 @@ export default function DashboardPage() {
 
         {/* Driver Standings */}
         <DashboardCard title="Top Drivers" icon={FaTrophy}>
-          <div className="h-60 p-4 bg-black/10 rounded shadow-inner text-sm text-white">
+          <div className="h-80 p-4 bg-black/10 rounded shadow-inner text-sm text-white overflow-y-auto custom-scrollbar">
             <DriverStandings />
           </div>
         </DashboardCard>
@@ -45,13 +45,13 @@ export default function DashboardPage() {
         {/* Left Column - Upcoming Races and Latest Race Results */}
         <div className="space-y-6">
           <DashboardCard title="Upcoming Races" icon={FaCalendarAlt}>
-            <div className="h-60 p-4 bg-black/10 rounded shadow-inner text-sm text-white overflow-y-auto">
+            <div className="h-60 p-4 bg-black/10 rounded shadow-inner text-sm text-white overflow-y-auto custom-scrollbar">
               <UpcomingRaces />
             </div>
           </DashboardCard>
 
           <DashboardCard title="Latest Race Results" icon={FaFlagCheckered}>
-            <div className="h-60 p-4 bg-black/10 rounded shadow-inner text-sm text-white overflow-y-auto">
+            <div className="h-60 p-4 bg-black/10 rounded shadow-inner text-sm text-white overflow-y-auto custom-scrollbar">
               <LatestRaceResults />
             </div>
           </DashboardCard>
@@ -59,7 +59,7 @@ export default function DashboardPage() {
 
         {/* Constructor Leaderboard */}
         <DashboardCard title="Constructor Leaderboard" icon={FaTrophy}>
-          <div className="h-60 p-4 bg-black/10 rounded shadow-inner text-sm text-white">
+          <div className="h-80 p-4 bg-black/10 rounded shadow-inner text-sm text-white overflow-y-auto custom-scrollbar">
             <ConstructorStandings />
             <p className="text-xs text-white/60 mt-3 text-center">
               Points updated after each race (F3, F5).

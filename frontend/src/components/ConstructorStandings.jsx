@@ -9,12 +9,16 @@ export default function ConstructorStandings() {
   useEffect(() => {
     fastf1Api.getConstructorStandings()
       .then((data) => {
+        console.log('Constructor Standings API Response:', data);
         const standings =
           data.MRData.StandingsTable.StandingsLists[0].ConstructorStandings;
-        setConstructors(standings.slice(0, 5));
+        console.log('Constructor Standings Data:', standings);
+        console.log('Number of constructors:', standings.length);
+        setConstructors(standings);
         setLoading(false);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('Error fetching constructor standings:', error);
         setError(true);
         setLoading(false);
       });
@@ -37,26 +41,15 @@ export default function ConstructorStandings() {
     }
   };
 
-  const getConstructorColor = (constructorName) => {
-    const colors = {
-      'Red Bull': 'border-red-500',
-      'Ferrari': 'border-red-600',
-      'Mercedes': 'border-cyan-400',
-      'McLaren': 'border-orange-500',
-      'Aston Martin': 'border-green-500',
-      'Alpine': 'border-blue-500',
-      'Williams': 'border-blue-600',
-      'Haas F1 Team': 'border-white',
-      'Kick Sauber': 'border-green-600',
-      'RB': 'border-blue-400'
-    };
-    return colors[constructorName] || 'border-white/30';
-  };
+
 
   return (
     <div className="space-y-2">
       {constructors.map((constructor, index) => (
-        <div key={constructor.Constructor?.constructorId || index} className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+        <div 
+          key={constructor.Constructor?.constructorId || index} 
+          className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+        >
           <div className="flex items-center space-x-3">
             {/* Position Badge */}
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${getPositionColor(index + 1)}`}>
@@ -67,9 +60,6 @@ export default function ConstructorStandings() {
             <div className="flex-1">
               <div className="font-semibold text-white">
                 {constructor.Constructor?.name || 'Unknown Team'}
-              </div>
-              <div className="text-xs text-white/60">
-                {constructor.wins || 0} wins
               </div>
             </div>
           </div>

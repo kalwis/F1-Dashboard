@@ -13,7 +13,7 @@ export default function DriverStandings() {
         const standings =
           data.MRData.StandingsTable.StandingsLists[0].DriverStandings;
         console.log('Driver Standings Data:', standings);
-        setDrivers(standings.slice(0, 5));
+        setDrivers(standings);
         setLoading(false);
       })
       .catch((error) => {
@@ -57,7 +57,7 @@ export default function DriverStandings() {
   };
 
   return (
-    <div className="space-y-2">
+    <div className="h-full space-y-2">
       {drivers.map((driver, index) => {
         console.log(`Driver ${index + 1}:`, driver);
         return (
