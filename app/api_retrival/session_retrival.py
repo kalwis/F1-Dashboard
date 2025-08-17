@@ -40,9 +40,9 @@ def get_session(year, round):
         if round > len(circuits) or round < 1: 
             return pd.DataFrame() 
         a = get_session_indivdual_pre(year=year, round=round, session_num=5)
-        
         a.rename(columns={
-            'driverNumber': 'DriverNumber',
+            'number': 'DriverNumber',
+            'driverUrl': 'DriverUrl',
             'driverId': 'DriverId',
             'position': 'RacePosition',
             'constructorName': 'ConstructorName',
@@ -65,7 +65,9 @@ def get_session(year, round):
                 'GridPosition',
                 'Laps',
                 'RaceTime',
-                'Status'
+                'Status',
+                'DriverNumber',
+                'DriverUrl'
             ]]
         if year > 2002:
             b = get_session_indivdual_pre(year=year, round=round, session_num=0)
@@ -97,15 +99,31 @@ def get_session(year, round):
         a.rename(columns={
             'Time': 'RaceTime',
             'Position': 'RacePosition',
-            'TeamName': 'ConstructorName'
+            'TeamName': 'ConstructorName',
+            'HeadshotUrl': 'DriverUrl'
         }, inplace=True)
-        a.drop(columns=['BroadcastName', 'Abbreviation', 'TeamColor', 'TeamId', 'FullName', 'HeadshotUrl', 'ClassifiedPosition', 'Q1', 'Q2', 'Q3', 'CountryCode', 'DriverNumber'], inplace=True)
+        a.drop(columns=['BroadcastName', 'Abbreviation', 'TeamColor', 'TeamId', 'FullName', 'ClassifiedPosition', 'Q1', 'Q2', 'Q3', 'CountryCode'], inplace=True)
         b = b[['Q1', 'Q2', 'Q3', 'Position', 'DriverId']]
         b.rename(columns={
             'Position':'QualifyingPosition'
         }, inplace=True)
         final = a.merge(b, on='DriverId', how='left')
     final["Round"] = round
+    final["Year"] = year
     return final
+
+
+
+
+
+def get_rounds_count(year):
+    if year < 2018:
+        circuits = Ergast().get_circuits(year)
+
+
+        return len(circuits)
+    else:
+        return max(fastf1.get_event_schedule(year)["RoundNumber"])
+
 
 
