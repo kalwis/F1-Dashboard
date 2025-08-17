@@ -38,14 +38,13 @@ def reset_tables():
             code TEXT NOT NULL UNIQUE,
             first_name TEXT NOT NULL,
             last_name TEXT NOT NULL,
-            date_of_birth DATE,
-            nationality TEXT
+            headshot TEXT,
+            country TEXT
     );
 
     CREATE TABLE IF NOT EXISTS Constructor (
         constructor_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        nationality TEXT
+        name TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS Race (
@@ -57,25 +56,21 @@ def reset_tables():
         date DATE
     );
 
-    CREATE TABLE IF NOT EXISTS Session (
-        session_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        race_id INTEGER NOT NULL,
-        session_type TEXT NOT NULL,
-        date DATE,
-        FOREIGN KEY (race_id) REFERENCES Race(race_id)
-    );
 
     CREATE TABLE IF NOT EXISTS Driver_Race (
         driver_race_id INTEGER PRIMARY KEY AUTOINCREMENT,
         driver_id INTEGER NOT NULL,
         constructor_id INTEGER NOT NULL,
-        session_id INTEGER NOT NULL,
+        race_id INTEGER NOT NULL,
+        Q1 TEXT,
+        Q2 TEXT,
+        Q3 TEXT,
         position INTEGER,
         points REAL,
         elo REAL,
         FOREIGN KEY (driver_id) REFERENCES Driver(driver_id),
         FOREIGN KEY (constructor_id) REFERENCES Constructor(constructor_id),
-        FOREIGN KEY (session_id) REFERENCES Session(session_id)
+        FOREIGN KEY (race_id) REFERENCES Race(race_id)
     );
     """)
     conn.commit()
@@ -83,7 +78,7 @@ def reset_tables():
 # ==========================
 # Insert helpers
 # ==========================
-def insert_driver(conn, code, first, last, dob, nationality):
+def insert_driver(conn, code, first, last, headshot, country):
     cur = conn.cursor()
 
     # Check if the driver already exists by code
@@ -94,21 +89,21 @@ def insert_driver(conn, code, first, last, dob, nationality):
 
     # Insert new driver
     cur.execute("""
-        INSERT INTO Driver (code, first_name, last_name, date_of_birth, nationality)
+        INSERT INTO Driver (code, first_name, last_name, headshot, country)
         VALUES (?, ?, ?, ?, ?)
     """, (
         str(code) if code is not None else None,
         str(first) if first is not None else None,
         str(last) if last is not None else None,
-        dob,
-        nationality
+        headshot,
+        country
     ))
     conn.commit()
 
     # Return the new ID
     return cur.lastrowid
 
-def insert_constructor(conn, name, nationality):
+def insert_constructor(conn, name):
     cur = conn.cursor()
 
     cur.execute("SELECT constructor_id FROM Constructor WHERE name=?", (name,))
@@ -117,9 +112,9 @@ def insert_constructor(conn, name, nationality):
         return existing[0]  # Return existing ID
 
     cur.execute("""
-        INSERT OR IGNORE INTO Constructor (name, nationality)
-        VALUES (?, ?)
-    """, (name, nationality))
+        INSERT OR IGNORE INTO Constructor (name)
+        VALUES (?)
+    """, (name,))
     conn.commit()
     return cur.execute("SELECT constructor_id FROM Constructor WHERE name=?", (name,)).fetchone()[0]
 
@@ -144,14 +139,19 @@ def insert_session(conn, race_id, session_type, date):
     return cur.execute("SELECT session_id FROM Session WHERE race_id=? AND session_type=?", (race_id, session_type)).fetchone()[0]
 
 
-def insert_driver_race(conn, driver_id, constructor_id, session_id, position, points, elo):
+def insert_driver_race(conn, driver_id, constructor_id, race_id, q1, q2, q3, position, points, elo):
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO Driver_Race (driver_id, constructor_id, session_id, position, points, elo)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (driver_id, constructor_id, session_id, position, points, elo))
+        INSERT INTO Driver_Race (driver_id, constructor_id, race_id, Q1, Q2, Q3, position, points, elo)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (driver_id, constructor_id, race_id, q1, q2, q3, position, points, elo))
     conn.commit()
 
+
+def format_quali_time(val):
+    if val is None or pd.isna(val):
+        return None
+    return str(val) 
 
 # ==========================
 # Populate DB from FastF1
@@ -171,70 +171,55 @@ def populate_for_season(year):
         conn = sqlite3.connect(DB_FILE)
         race_id = insert_race(conn, year, round_number, race_name, circuit, race_date)
 
-        # Sessions to attempt (not all will exist for all years)
-        sessions_to_try = ['Qualifying', 'Race']
+        # --- Load Qualifying ---
+        quali_results = None
+        try:
+            quali = fastf1.get_session(year, round_number, 'Qualifying')
+            quali.load()
+            quali_results = quali.results
+        except Exception:
+            pass
 
-        for sess_type in sessions_to_try:
-            
-            
-            
-            try:
-                session = fastf1.get_session(year, round_number, sess_type)
-                session.load()
-            except Exception:
-                # Skip if this session doesn't exist
-                continue
-            
-            results = session.results
-            if sess_type == 'Qualifying':
-                # Insert separate sessions Q1, Q2, Q3
-                for quali_phase in ['Q1', 'Q2', 'Q3']:
-                    session_id = insert_session(conn, race_id, quali_phase, session.date.strftime('%Y-%m-%d'))
-                    
-                    for _, row in results.iterrows():
-                        time = row.get(quali_phase, None)
-                        if pd.isna(time):
-                            continue  # Driver didnt participate in this phase
-                        
-                        driver_id = insert_driver(
-                            conn,
-                            row['Abbreviation'],
-                            row.get('FirstName', None),
-                            row.get('LastName', None),
-                            None,
-                            None
-                        )
-                        constructor_id = insert_constructor(conn, row['TeamName'], None)
-                    
-                        # Store order within that phase instead of final position
-                        insert_driver_race(conn, driver_id, constructor_id, session_id, None, None, None)
-                        
-            else:
+        # --- Load Race ---
+        try:
+            race = fastf1.get_session(year, round_number, 'Race')
+            race.load()
+            race_results = race.results
+        except Exception:
+            race_results = None
 
-                session_id = insert_session(conn, race_id, sess_type, session.date.strftime('%Y-%m-%d'))
-               
-                
+        if race_results is None:
+            conn.close()
+            continue
 
-                if results is None:
-                    continue
+        for _, row in race_results.iterrows():
+            print(row.get('HeadshotUrl'))
+            driver_id = insert_driver(
+                conn,
+                row['Abbreviation'],
+                row.get('FirstName', None),
+                row.get('LastName', None),
+                row.get('HeadshotUrl'),
+                row.get('CountryCode')
+            )
+            constructor_id = insert_constructor(conn, row['TeamName'])
 
-                for _, row in results.iterrows():
-                    driver_id = insert_driver(
-                        conn,
-                        row['Abbreviation'],
-                        row.get('FirstName', None),
-                        row.get('LastName', None),
-                        None,
-                        None
-                    )
-                    constructor_id = insert_constructor(conn, row['TeamName'], None)
-                    position = row.get('Position', None)
-                    points = row.get('Points', None)
-                    elo = None  # Your ELO calculation could go here
+            # pull qualifying times if available
+            q1 = q2 = q3 = None
+            if quali_results is not None and row['Abbreviation'] in quali_results['Abbreviation'].values:
+                qrow = quali_results[quali_results['Abbreviation'] == row['Abbreviation']].iloc[0]
+                q1 = format_quali_time(qrow.get('Q1', None))
+                q2 = format_quali_time(qrow.get('Q2', None))
+                q3 = format_quali_time(qrow.get('Q3', None))
 
-                    insert_driver_race(conn, driver_id, constructor_id, session_id, position, points, elo)
+            position = row.get('Position', None)
+            points = row.get('Points', None)
+            elo = None
+
+            insert_driver_race(conn, driver_id, constructor_id, race_id, q1, q2, q3, position, points, elo)
 
         conn.close()
+
 
 
 if __name__ == "__main__":
