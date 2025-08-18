@@ -8,7 +8,7 @@ body {
   font-family: 'Titillium Web', sans-serif;
 }
 
-/* Custom Aesthetic Grey Pill Scrollbar */
+/* Custom Aesthetic Grey Pill Scrollbar - Hidden by default, visible on scroll */
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
 }
@@ -19,9 +19,13 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.6);
+  background: transparent;
   border-radius: 10px;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+}
+
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.6);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
@@ -33,8 +37,12 @@ body {
   display: none;
 }
 
-/* Firefox scrollbar */
+/* Firefox scrollbar - hidden by default */
 .custom-scrollbar {
   scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.custom-scrollbar:hover {
   scrollbar-color: rgba(156, 163, 175, 0.6) transparent;
 }

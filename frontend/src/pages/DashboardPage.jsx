@@ -11,7 +11,7 @@ export default function DashboardPage() {
     <div className="p-6 font-sans text-gray-200 max-w-7xl mx-auto">
       
       {/* Main grid layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         
         {/* Elo Rating History - Full width at top */}
         <div className="lg:col-span-3">
@@ -36,8 +36,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Driver Standings */}
-        <DashboardCard title="Top Drivers" icon={FaTrophy}>
-          <div className="h-80 p-4 bg-black/10 rounded shadow-inner text-sm text-white overflow-y-auto custom-scrollbar">
+        <DashboardCard title="Driver Leaderboard" icon={FaTrophy}>
+          <div className="h-[35rem] p-4 bg-black/10 rounded shadow-inner text-sm text-white overflow-y-auto custom-scrollbar">
             <DriverStandings />
           </div>
         </DashboardCard>
@@ -59,11 +59,8 @@ export default function DashboardPage() {
 
         {/* Constructor Leaderboard */}
         <DashboardCard title="Constructor Leaderboard" icon={FaTrophy}>
-          <div className="h-80 p-4 bg-black/10 rounded shadow-inner text-sm text-white overflow-y-auto custom-scrollbar">
+          <div className="h-[35rem] p-4 bg-black/10 rounded shadow-inner text-sm text-white overflow-y-auto custom-scrollbar">
             <ConstructorStandings />
-            <p className="text-xs text-white/60 mt-3 text-center">
-              Points updated after each race (F3, F5).
-            </p>
           </div>
         </DashboardCard>
         
