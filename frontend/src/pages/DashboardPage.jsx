@@ -20,18 +20,8 @@ export default function DashboardPage() {
             title="Elo Rating History"
             icon={FaChartLine}
           >
-            <div className="flex flex-col h-60 p-4 bg-black/10 rounded shadow-inner text-white">
-              <div className="flex justify-between items-center mb-3">
-                <label className="text-sm text-white/80">Filter by:</label>
-                <select className="border border-white/20 bg-black/20 text-white px-2 py-1 text-sm rounded">
-                  <option>Driver</option>
-                  <option>Constructor</option>
-                  <option>Driver-Car Pair</option>
-                </select>
-              </div>
-              <div className="flex-1">
-                <EloHistoryChart />
-              </div>
+            <div className="h-80 p-4 bg-black/10 rounded shadow-inner text-white">
+              <EloHistoryChart />
             </div>
           </DashboardCard>
         </div>

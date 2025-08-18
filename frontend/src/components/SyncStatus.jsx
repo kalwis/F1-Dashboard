@@ -33,10 +33,17 @@ export default function SyncStatus() {
       const isOnline = await fastf1Api.isAvailable();
       const cacheStatus = fastf1Api.getCacheStatus();
       
-      // Find the most recent cache entry
-      const lastSync = cacheStatus.length > 0 
-        ? Math.max(...cacheStatus.map(entry => entry.timestamp || 0))
-        : null;
+      // Find the most recent cache entry with valid timestamp
+      let lastSync = null;
+      if (cacheStatus.length > 0) {
+        const validTimestamps = cacheStatus
+          .map(entry => entry.timestamp)
+          .filter(timestamp => timestamp && timestamp > 0);
+        
+        if (validTimestamps.length > 0) {
+          lastSync = Math.max(...validTimestamps);
+        }
+      }
 
       // Calculate next auto-sync (every 5 minutes based on cache timeout)
       const nextAutoSync = lastSync ? lastSync + (5 * 60 * 1000) : null;
