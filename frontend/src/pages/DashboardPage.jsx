@@ -4,6 +4,7 @@ import UpcomingRaces from '../components/UpcomingRaces';
 import DriverStandings from '../components/DriverStandings';
 import ConstructorStandings from '../components/ConstructorStandings';
 import LatestRaceResults from '../components/LatestRaceResults';
+import SyncStatus from '../components/SyncStatus';
 import { FaChartLine, FaCalendarAlt, FaTrophy, FaFlagCheckered } from 'react-icons/fa';
 
 export default function DashboardPage() {
@@ -67,8 +68,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Footer Sync Info */}
-      <div className="mt-6 text-xs text-gray-400 text-right">
-        Last synced with official API: <strong>6 minutes ago</strong> (Auto-updates daily, no manual input required)
+      <div className="mt-6">
+        <SyncStatus />
       </div>
     </div>
   );
