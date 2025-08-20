@@ -83,6 +83,22 @@ def reset_tables():
         FOREIGN KEY (constructor_id) REFERENCES Constructor(constructor_id),
         FOREIGN KEY (race_id) REFERENCES Race(race_id)
     );
+
+    CREATE TABLE IF NOT EXISTS Advancecd_race (
+        advanced_race_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        driver_race_id  INTEGER NOT NULL,
+        avg_lap_time TEXT,
+        qualifying_time REAL,
+        sector1 REAL,
+        sector2 REAL,
+        sector3 REAL,
+        model_used TEXT,
+        FOREIGN KEY (driver_race_id) REFERENCES Driver_Race(driver_race_id)    
+
+    );          
+
+
+
     """)
     conn.commit()
     conn.close()
