@@ -4,7 +4,7 @@ import fastf1
 from fastf1 import utils
 from datetime import datetime
 from fastf1.ergast import Ergast
-from combine_elo_session import get_sql_session_driver
+from combine_elo_session import get_sql_session_elos
 
 import pandas as pd
 
@@ -196,7 +196,7 @@ def populate_for_season(year):
     print(f"\n=== Processing {year} season ===")
 
     # Get all driver results for the season in one go
-    results = get_sql_session_driver(year)
+    results = get_sql_session_elos(year)
     if results.empty:
         print(f"No results for {year}")
         return

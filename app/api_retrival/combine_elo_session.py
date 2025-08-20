@@ -51,3 +51,51 @@ def get_sql_session_driver(year):
 
 
 
+def merge_session_elos(elo_tables, session):
+    """
+    Merge driver and constructor elo ratings into a single session dataframe.
+    - elo_tables[0] = driver elo
+    - elo_tables[1] = constructor elo
+    - elo_tables[2] = driver combined elo
+    - session = session dataframe with DriverId, ConstructorName, Year, Round
+    """
+    round = max(session["Round"])
+    merged = session.copy()
+
+    # Add Driver Elo
+    merged = merged.merge(
+        elo_tables[0][["DriverId", round]], on="DriverId", how="left"
+    )
+    merged.rename(columns={round: "DriverElo"}, inplace=True)
+
+    # Add Driver Combined Elo
+    merged = merged.merge(
+        elo_tables[2][["DriverId", round]], on="DriverId", how="left"
+    )
+    merged.rename(columns={round: "DriverCombinedElo"}, inplace=True)
+
+    # Add Constructor Elo
+    merged = merged.merge(
+        elo_tables[1][["ConstructorName", round]], on="ConstructorName", how="left"
+    )
+    merged.rename(columns={round: "ConstructorElo"}, inplace=True)
+
+    return merged
+
+
+def get_sql_session_elos(year):
+    """
+    Build full session-level dataframe with driver & constructor elos
+    across all rounds in a season.
+    """
+    elo_tables = fn2.get_season_elos(year)
+    results = pd.DataFrame()
+
+    for rnd in range(1, fn1.get_rounds_count(year)):
+        session = fn1.get_session(year, rnd)
+        session_merged = merge_session_elos(elo_tables, session)
+        results = pd.concat([results, session_merged], ignore_index=True)
+
+    return results
+
+print(get_sql_session_elos(2008))
