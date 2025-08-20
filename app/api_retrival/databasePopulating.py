@@ -15,4 +15,4 @@ def populate_race():
     races.all_races()
 
 
-print(session_populate(2008))
+

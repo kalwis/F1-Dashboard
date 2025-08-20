@@ -98,4 +98,6 @@ def get_sql_session_elos(year):
 
     return results
 
-print(get_sql_session_elos(2008))
+x = get_sql_session_elos(1950)
+
+print(x)

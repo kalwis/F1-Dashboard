@@ -5,6 +5,8 @@ from fastf1 import utils
 from datetime import datetime
 from fastf1.ergast import Ergast
 from combine_elo_session import get_sql_session_elos
+import random, time
+
 
 import pandas as pd
 
@@ -34,6 +36,7 @@ def reset_tables():
     DROP TABLE IF EXISTS Race;
     DROP TABLE IF EXISTS Session;
     DROP TABLE IF EXISTS Driver_Race;
+    DROP TABLE IF EXISTS Constructor_Race;
 
     CREATE TABLE IF NOT EXISTS Driver (
             driver_id INTEGER PRIMARY KEY,
@@ -52,10 +55,11 @@ def reset_tables():
     CREATE TABLE IF NOT EXISTS Constructor_Race (
         constructor_race_id INTEGER PRIMARY KEY AUTOINCREMENT,
         constructor_id INTEGER NOT NULL,
-        year INTEGER NOT NULL,
-        round INTEGER NOT NULL,
-        elo REAL DEFAULT NULL,
+        race_id INTEGER NOT NULL,
+        elo INTEGER,
+        UNIQUE(constructor_id, race_id),
         FOREIGN KEY (constructor_id) REFERENCES Constructor(constructor_id)
+        FOREIGN KEY (race_id) REFERENCES Race(race_id)
     );
 
     CREATE TABLE IF NOT EXISTS Race (
@@ -73,18 +77,24 @@ def reset_tables():
         driver_id INTEGER NOT NULL,
         constructor_id INTEGER NOT NULL,
         race_id INTEGER NOT NULL,
+        GridPosition INTEGER,
+        Laps INTEGER,
+        RaceTime TEXT,
+        Status TEXT,
         Q1 TEXT,
         Q2 TEXT,
         Q3 TEXT,
+        qualifying_position INTEGER,
         position INTEGER,
-        points REAL,
-        elo REAL,
+        points INTEGER,
+        elo INTEGER,
+        combined_elo INTEGER,
         FOREIGN KEY (driver_id) REFERENCES Driver(driver_id),
         FOREIGN KEY (constructor_id) REFERENCES Constructor(constructor_id),
         FOREIGN KEY (race_id) REFERENCES Race(race_id)
     );
 
-    CREATE TABLE IF NOT EXISTS Advancecd_race (
+    CREATE TABLE IF NOT EXISTS Advanced (
         advanced_race_id INTEGER PRIMARY KEY AUTOINCREMENT,
         driver_race_id  INTEGER NOT NULL,
         avg_lap_time TEXT,
@@ -166,21 +176,65 @@ def insert_session(conn, race_id, session_type, date):
     return cur.execute("SELECT session_id FROM Session WHERE race_id=? AND session_type=?", (race_id, session_type)).fetchone()[0]
 
 
-def insert_driver_race(conn, driver_id, constructor_id, race_id, q1, q2, q3, position, points, elo):
+def insert_driver_race(
+    conn,
+    driver_id,
+    constructor_id,
+    race_id,
+    grid_position,
+    laps,
+    race_time,
+    status,
+    q1,
+    q2,
+    q3,
+    qualifying_position,
+    position,
+    points,
+    elo,
+    combined_elo
+):
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO Driver_Race (driver_id, constructor_id, race_id, Q1, Q2, Q3, position, points, elo)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (driver_id, constructor_id, race_id, q1, q2, q3, position, points, elo))
+        INSERT INTO Driver_Race (
+            driver_id, constructor_id, race_id,
+            GridPosition, Laps, RaceTime, Status,
+            Q1, Q2, Q3, qualifying_position,
+            position, points, elo,combined_elo
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+    """, (
+        driver_id, constructor_id, race_id,
+        int(grid_position), int(laps), race_time, status,
+        q1, q2, q3, qualifying_position,
+        position, points, int(elo), int(combined_elo)
+    ))
     conn.commit()
+    return cur.lastrowid
 
-def insert_constructor_race(conn, constructor_id, year, round, elo):
+
+def insert_constructor_race(conn, constructor_id, race_id, elo):
     cur = conn.cursor()
+
+    # Check if this constructor already has an entry for this year+round
     cur.execute("""
-        INSERT INTO Constructor_Race (constructor_id, year, round, elo)
-        VALUES (?, ?, ?, ?)
-    """, (constructor_id, year, round, elo))
+        SELECT constructor_race_id 
+        FROM Constructor_Race 
+        WHERE constructor_id=? AND race_id=?
+    """, (constructor_id, race_id))
+
+    existing = cur.fetchone()
+    if existing:
+        return existing[0]  # Return existing ID
+
+    # Insert new row
+    cur.execute("""
+        INSERT INTO Constructor_Race (constructor_id, race_id, elo)
+        VALUES (?, ?, ?)
+    """, (constructor_id, race_id, int(elo) if elo is not None else None))
     conn.commit()
+    
+    return cur.lastrowid
 
 
 
@@ -223,10 +277,12 @@ def populate_for_season(year):
                 row.get("CountryName")
             )
             constructor_id = insert_constructor(conn, row["ConstructorName"])
-
+            
+            constructor_elo = row.get("ConstructorElo")
             # Insert constructor race (elo starts null unless provided)
-            insert_constructor_race(conn, constructor_id, year, round_number, row.get("ConstructorElo", None))
+            insert_constructor_race(conn, constructor_id, race_id, constructor_elo)
 
+            racetime = format_quali_time(row.get("RaceTime")) if "RaceTime" in row else None
             q1 = format_quali_time(row.get("Q1")) if "Q1" in row else None
             q2 = format_quali_time(row.get("Q2")) if "Q2" in row else None
             q3 = format_quali_time(row.get("Q3")) if "Q3" in row else None
@@ -237,7 +293,16 @@ def populate_for_season(year):
 
             insert_driver_race(
                 conn, driver_id, constructor_id, race_id,
-                q1, q2, q3, position, points, elo
+                row.get("GridPosition"),
+                row.get("Laps"),
+                racetime,
+                row.get("Status"),
+                q1, q2, q3,
+                row.get("QualifyingPosition"),
+                row.get("RacePosition"),
+                row.get("Points"),
+                row.get("DriverElo"),
+                row.get("DriverCombinedElo")
             )
 
     conn.close()
@@ -250,10 +315,12 @@ def populate_for_season(year):
 if __name__ == "__main__":
     reset_tables()
     
-    """for yr in range(2008, current_year + 1):
+    for yr in range(1950, current_year + 1):
         populate_for_season(yr)
+        print(f"Populated data for {yr} season.")
+        time.sleep(3 + random.uniform(0.5, 2.0))  # 3-5s pause
 
-    print("\n Database populated for all seasons from 2008 onwards.")"""
+    print("\n Database populated for all seasons from 1950 onwards.")
 
-    populate_for_season(2008)
+   
     
