@@ -13,3 +13,5 @@ def driver_populate():
 
 def populate_race():
     races.all_races()
+
+print(session_populate(2012).columns)
