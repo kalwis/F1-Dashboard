@@ -195,6 +195,18 @@ def insert_driver_race(
     combined_elo
 ):
     cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT driver_race_id 
+        FROM Driver_Race 
+        WHERE driver_id=? AND race_id=?
+    """, (driver_id, race_id))
+
+    existing = cur.fetchone()
+    if existing:
+        return existing[0]  # Return existing ID
+
+    
     cur.execute("""
         INSERT INTO Driver_Race (
             driver_id, constructor_id, race_id,
@@ -313,14 +325,12 @@ def populate_for_season(year):
 
 
 if __name__ == "__main__":
-    reset_tables()
+    #reset_tables()
     
-    for yr in range(1950, current_year + 1):
+    for yr in range(2017, current_year + 1):
         populate_for_season(yr)
         print(f"Populated data for {yr} season.")
-        time.sleep(3 + random.uniform(0.5, 2.0))  # 3-5s pause
+        time.sleep(30 + random.uniform(0.5, 2.0))  # 30-32s pause
 
-    print("\n Database populated for all seasons from 1950 onwards.")
+    print("\n Database populated for all seasons from 2017 onwards.")
 
-   
-    
