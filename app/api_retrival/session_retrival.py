@@ -1,4 +1,5 @@
 #pip install fastf1
+import os
 import fastf1
 from fastf1.ergast import Ergast
 from datetime import datetime
@@ -30,6 +31,9 @@ def get_session_indivdual_pre(year, round, session_num):
 
 #get any session, will return empty dataframe if it doesnt exist in the database or is invalid
 def get_session(year, round):
+    CACHE_DIR = 'fastf1_cache'
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    fastf1.Cache.enable_cache(CACHE_DIR)
     if year > datetime.now().year or year < 1950:
         return pd.DataFrame()
     
