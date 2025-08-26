@@ -10,7 +10,6 @@ export const createChartOptions = (selectedDriver) => ({
       display: false, // We'll handle legend manually
     },
     tooltip: {
-      enabled: selectedDriver !== 'all', // Only show tooltip for individual drivers
       backgroundColor: 'rgba(0, 0, 0, 0.8)',
       titleColor: '#ffffff',
       bodyColor: '#ffffff',
