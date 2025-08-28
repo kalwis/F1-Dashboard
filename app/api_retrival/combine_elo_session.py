@@ -44,12 +44,14 @@ def get_sql_session_constructor(year):
 
 def get_sql_session_driver(year):
     a = fn2.get_season_elos(year)
+    print(fn1.get_session(2001, 17))
+    return "A"
     b = pd.DataFrame()
     for i in range(1, fn1.get_rounds_count(year)):
         b = pd.concat([b, merge_player_elo_session(a, fn1.get_session(year, i))], ignore_index=True)
     return b
 
-
+print(get_sql_session_driver(2017))
 
 def merge_session_elos(elo_tables, session):
     """
@@ -98,6 +100,3 @@ def get_sql_session_elos(year):
 
     return results
 
-x = get_sql_session_elos(1950)
-
-print(x)

@@ -93,8 +93,8 @@ def get_session(year, round):
             a["Q3"] = 0
             a['QualifyingPosition'] = 0
             final = a
-
-        final["CircuitLocation"] = circuits.loc[round -1, 'locality']
+        
+        final["CircuitLocation"] = Ergast().get_circuits(year, round).loc[0, 'locality']
         
         
     else:
