@@ -111,8 +111,9 @@ def get_season_elos(year):
     player_elo = pd.DataFrame()
 
     round_count = fn.get_rounds_count(year)
+
     
-    for i in range(1,round_count):
+    for i in range(1,round_count+1):
         res = fn.get_session(year, i)
         j = add_elo_rating(year, i, j, elo_types[1], None, res)
         m = add_elo_rating(year, i, m, elo_types[0], j[["ConstructorName", i]], res) 
@@ -128,4 +129,3 @@ def get_season_elos(year):
     player_elo.drop(columns=['GridPosition', 'ConstructorName'], inplace=True)
     return  (player_elo, j, m)
         
-

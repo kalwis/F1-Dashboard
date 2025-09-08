@@ -134,7 +134,7 @@ def get_rounds_count(year):
 
 if __name__ == "__main__":
     
-    print(get_session(2003,1))
+    print(get_session(2017,20))
 
 
     

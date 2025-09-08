@@ -36,7 +36,7 @@ def merge_constructor_elo_session(elo_tables, session):
 def get_sql_session_constructor(year):
     a = fn2.get_season_elos(year)
     b = pd.DataFrame()
-    for i in range(1, fn1.get_rounds_count(year)):
+    for i in range(1, fn1.get_rounds_count(year)+1):
         b = pd.concat([b, merge_constructor_elo_session(a, fn1.get_session(year, i))], ignore_index=True)
     return b
 
@@ -44,14 +44,11 @@ def get_sql_session_constructor(year):
 
 def get_sql_session_driver(year):
     a = fn2.get_season_elos(year)
-    print(fn1.get_session(2001, 17))
-    return "A"
     b = pd.DataFrame()
-    for i in range(1, fn1.get_rounds_count(year)):
+    for i in range(1, fn1.get_rounds_count(year)+1):
         b = pd.concat([b, merge_player_elo_session(a, fn1.get_session(year, i))], ignore_index=True)
     return b
 
-print(get_sql_session_driver(2017))
 
 def merge_session_elos(elo_tables, session):
     """
@@ -63,7 +60,7 @@ def merge_session_elos(elo_tables, session):
     """
     round = max(session["Round"])
     merged = session.copy()
-
+    
     # Add Driver Elo
     merged = merged.merge(
         elo_tables[0][["DriverId", round]], on="DriverId", how="left"
@@ -92,11 +89,19 @@ def get_sql_session_elos(year):
     """
     elo_tables = fn2.get_season_elos(year)
     results = pd.DataFrame()
-
-    for rnd in range(1, fn1.get_rounds_count(year)):
+    
+    
+    for rnd in range(1, fn1.get_rounds_count(year)+1):
         session = fn1.get_session(year, rnd)
+        
         session_merged = merge_session_elos(elo_tables, session)
         results = pd.concat([results, session_merged], ignore_index=True)
 
     return results
+
+
+if __name__ == "__main__":
+    #fn1.get_rounds_count(2017)
+    print(get_sql_session_elos(2017))
+
 

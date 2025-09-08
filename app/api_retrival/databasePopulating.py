@@ -16,3 +16,6 @@ def populate_race():
 
 
 
+if __name__ == "__main__":
+    print(session_populate(2017))
+

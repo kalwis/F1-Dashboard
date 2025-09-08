@@ -325,9 +325,9 @@ def populate_for_season(year):
 
 
 if __name__ == "__main__":
-    #reset_tables()
+    reset_tables()
     
-    for yr in range(2017, current_year + 1):
+    for yr in range(1950, current_year):
         populate_for_season(yr)
         print(f"Populated data for {yr} season.")
         time.sleep(30 + random.uniform(0.5, 2.0))  # 30-32s pause

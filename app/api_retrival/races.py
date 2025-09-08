@@ -14,3 +14,8 @@ def all_races():
     for i in range(1950, 2025):
         races = pd.concat([races, getRaces(i)], ignore_index=True)
     return races
+
+if __name__ == "__main__":
+    print(getRaces(2003))
+
+
