@@ -278,7 +278,7 @@ def populate_for_season(year):
         print(f"  -> {race_name} (Round {round_number})")
 
         race_id = insert_race(conn, year, round_number, race_name, circuit, race_date)
-
+        
         for _, row in round_df.iterrows():
             driver_id = insert_driver(
                 conn,
@@ -325,12 +325,12 @@ def populate_for_season(year):
 
 
 if __name__ == "__main__":
-    reset_tables()
+    #reset_tables()
     
-    for yr in range(1950, current_year):
+    for yr in range(2021, current_year):
         populate_for_season(yr)
         print(f"Populated data for {yr} season.")
-        time.sleep(30 + random.uniform(0.5, 2.0))  # 30-32s pause
+        time.sleep(20 + random.uniform(0.5, 2.0))  # 30-32s pause
 
-    print("\n Database populated for all seasons from 2017 onwards.")
-
+    print("\n Database populated for all seasons from 2020 onwards.")
+    

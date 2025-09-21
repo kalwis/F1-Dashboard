@@ -128,4 +128,11 @@ def get_season_elos(year):
     m.drop(columns=['ConstructorName', 'GridPosition'], inplace=True)
     player_elo.drop(columns=['GridPosition', 'ConstructorName'], inplace=True)
     return  (player_elo, j, m)
+
+
+if __name__ == "__main__":
+    #fn1.get_rounds_count(2017)
+    x = get_season_elos(2021)
+    print(x)
+
         
