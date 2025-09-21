@@ -2,7 +2,7 @@
 
 class FastF1ApiService {
   constructor() {
-    this.baseUrl = 'http://localhost:5000/api';
+    this.baseUrl = 'https://f1-dashboard-doj4.onrender.com//api';
     this.cache = new Map();
     this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
   }

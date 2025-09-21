@@ -9,7 +9,13 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from 'chart.js';
+
+import { createChartOptions } from './EloHistoryChart/chartOptions';
+import { sampleDrivers, sampleData } from './EloHistoryChart/sampleData';
+import { createChartData, fetchEloData } from './EloHistoryChart/utils';
+import DriverSelector from './EloHistoryChart/DriverSelector';
 
 ChartJS.register(
   CategoryScale,
@@ -18,65 +24,88 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 export default function EloHistoryChart() {
   const [chartData, setChartData] = useState(null);
-
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top',
-      },
-      title: {
-        display: false,
-      },
-    },
-  };
-
-  const defaultData = {
-    labels: ['Race 1', 'Race 2', 'Race 3', 'Race 4', 'Race 5'],
-    datasets: [
-      {
-        label: 'Elo Rating',
-        data: [1500, 1520, 1535, 1510, 1540],
-        borderColor: '#e10600',
-        backgroundColor: 'rgba(225, 6, 0, 0.3)',
-      },
-    ],
-  };
+  const [selectedDriver, setSelectedDriver] = useState('all');
+  const [drivers, setDrivers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showDriverList, setShowDriverList] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       try {
-        const jolpicaRes = await fetch('https://api.jolpica.com/f1/elo-history');
-        const jolpicaData = await jolpicaRes.json();
-        const fastf1Res = await fetch('https://fastf1.jolpica.com/elo-history');
-        const fastf1Data = await fastf1Res.json();
-        const labels =
-          jolpicaData.labels || fastf1Data.labels || ['Race 1', 'Race 2'];
-        const ratings =
-          jolpicaData.ratings || fastf1Data.ratings || [1500, 1510];
-        setChartData({
-          labels,
-          datasets: [
-            {
-              label: 'Elo Rating',
-              data: ratings,
-              borderColor: '#e10600',
-              backgroundColor: 'rgba(225, 6, 0, 0.3)',
-            },
-          ],
-        });
-      } catch (err) {
-        setChartData(null);
+        const data = await fetchEloData();
+        // Process real data here
+        setDrivers(sampleDrivers);
+        setChartData(createChartData(sampleData, selectedDriver));
+      } catch (error) {
+        // Fallback to sample data
+        setDrivers(sampleDrivers);
+        setChartData(createChartData(sampleData, selectedDriver));
+      } finally {
+        setLoading(false);
       }
     }
     fetchData();
   }, []);
 
-  return <Line options={options} data={chartData || defaultData} />;
+  const handleDriverChange = (driverId) => {
+    setSelectedDriver(driverId);
+    setChartData(createChartData(sampleData, driverId));
+    setShowDriverList(false);
+    setSearchTerm('');
+  };
+
+  // Filter drivers based on search term
+  const filteredDrivers = drivers.filter(driver =>
+    driver.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    driver.team.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+      </div>
+    );
+  }
+
+  const options = createChartOptions(selectedDriver);
+
+  return (
+    <div className="w-full h-full flex flex-col">
+      {/* Driver Selection */}
+      <DriverSelector
+        selectedDriver={selectedDriver}
+        drivers={drivers}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        showDriverList={showDriverList}
+        setShowDriverList={setShowDriverList}
+        handleDriverChange={handleDriverChange}
+        filteredDrivers={filteredDrivers}
+      />
+
+      {/* Chart */}
+      <div className="flex-1 min-h-0 relative">
+        {chartData && <Line options={options} data={chartData} />}
+      </div>
+
+      {/* Chart Info */}
+      <div className="mt-2 text-xs text-gray-400">
+        <div className="flex justify-between items-center">
+          <span>Elo ratings track driver performance over time</span>
+          <span className="text-gray-500">
+            Higher rating = Better performance
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 }

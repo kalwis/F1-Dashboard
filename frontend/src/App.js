@@ -11,15 +11,43 @@ export default function App() {
     <Router>
       <div className="min-h-screen bg-black font-sans">
         <Routes>
-          {/* Welcome page without navbar */}
           <Route path="/" element={<WelcomePage />} />
           
-          {/* All other pages with navbar and consistent background */}
           <Route path="/dashboard" element={
             <div className="relative min-h-screen bg-black overflow-hidden">
               <div className="absolute inset-0 z-0">
-                <div className="w-full h-full bg-gradient-to-br from-purple-900/20 via-black to-red-900/20"></div>
+                <div className="w-full h-full bg-gradient-to-br from-red-900/40 via-black to-blue-900/40"></div>
+                
+                {/* Speed lines effect */}
+                <div className="absolute inset-0 opacity-15">
+                  <div className="w-full h-full bg-speed-lines" style={{
+                    backgroundImage: `
+                      repeating-linear-gradient(
+                        45deg,
+                        transparent,
+                        transparent 10px,
+                        rgba(255,255,255,0.1) 10px,
+                        rgba(255,255,255,0.1) 20px
+                      )
+                    `
+                  }}></div>
+                </div>
+                
+                {/* Checkered flag pattern */}
+                <div className="absolute inset-0 opacity-5">
+                  <div className="w-full h-full" style={{
+                    backgroundImage: `
+                      linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+                      linear-gradient(-45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+                      linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.1) 75%),
+                      linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.1) 75%)
+                    `,
+                    backgroundSize: '20px 20px',
+                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
+                  }}></div>
+                </div>
               </div>
+              
               <div className="relative z-10">
                 <Navbar />
                 <DashboardPage />
@@ -28,9 +56,41 @@ export default function App() {
           } />
           <Route path="/predictions" element={
             <div className="relative min-h-screen bg-black overflow-hidden">
+              {/* Racing Background Effects */}
               <div className="absolute inset-0 z-0">
-                <div className="w-full h-full bg-gradient-to-br from-purple-900/20 via-black to-red-900/20"></div>
+                {/* Racing-inspired gradient */}
+                <div className="w-full h-full bg-gradient-to-br from-red-900/40 via-black to-blue-900/40"></div>
+                
+                {/* Speed lines effect */}
+                <div className="absolute inset-0 opacity-15">
+                  <div className="w-full h-full bg-speed-lines" style={{
+                    backgroundImage: `
+                      repeating-linear-gradient(
+                        45deg,
+                        transparent,
+                        transparent 10px,
+                        rgba(255,255,255,0.1) 10px,
+                        rgba(255,255,255,0.1) 20px
+                      )
+                    `
+                  }}></div>
+                </div>
+                
+                {/* Checkered flag pattern */}
+                <div className="absolute inset-0 opacity-5">
+                  <div className="w-full h-full" style={{
+                    backgroundImage: `
+                      linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+                      linear-gradient(-45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+                      linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.1) 75%),
+                      linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.1) 75%)
+                    `,
+                    backgroundSize: '20px 20px',
+                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
+                  }}></div>
+                </div>
               </div>
+              
               <div className="relative z-10">
                 <Navbar />
                 <PredictionsPage />
@@ -39,9 +99,41 @@ export default function App() {
           } />
           <Route path="/rankings" element={
             <div className="relative min-h-screen bg-black overflow-hidden">
+              {/* Racing Background Effects */}
               <div className="absolute inset-0 z-0">
-                <div className="w-full h-full bg-gradient-to-br from-purple-900/20 via-black to-red-900/20"></div>
+                {/* Racing-inspired gradient */}
+                <div className="w-full h-full bg-gradient-to-br from-red-900/40 via-black to-blue-900/40"></div>
+                
+                {/* Speed lines effect */}
+                <div className="absolute inset-0 opacity-15">
+                  <div className="w-full h-full bg-speed-lines" style={{
+                    backgroundImage: `
+                      repeating-linear-gradient(
+                        45deg,
+                        transparent,
+                        transparent 10px,
+                        rgba(255,255,255,0.1) 10px,
+                        rgba(255,255,255,0.1) 20px
+                      )
+                    `
+                  }}></div>
+                </div>
+                
+                {/* Checkered flag pattern */}
+                <div className="absolute inset-0 opacity-5">
+                  <div className="w-full h-full" style={{
+                    backgroundImage: `
+                      linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+                      linear-gradient(-45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+                      linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.1) 75%),
+                      linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.1) 75%)
+                    `,
+                    backgroundSize: '20px 20px',
+                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
+                  }}></div>
+                </div>
               </div>
+              
               <div className="relative z-10">
                 <Navbar />
                 <RankingsPage />
@@ -50,9 +142,41 @@ export default function App() {
           } />
           <Route path="/compare" element={
             <div className="relative min-h-screen bg-black overflow-hidden">
+              {/* Racing Background Effects */}
               <div className="absolute inset-0 z-0">
-                <div className="w-full h-full bg-gradient-to-br from-purple-900/20 via-black to-red-900/20"></div>
+                {/* Racing-inspired gradient */}
+                <div className="w-full h-full bg-gradient-to-br from-red-900/40 via-black to-blue-900/40"></div>
+                
+                {/* Speed lines effect */}
+                <div className="absolute inset-0 opacity-15">
+                  <div className="w-full h-full bg-speed-lines" style={{
+                    backgroundImage: `
+                      repeating-linear-gradient(
+                        45deg,
+                        transparent,
+                        transparent 10px,
+                        rgba(255,255,255,0.1) 10px,
+                        rgba(255,255,255,0.1) 20px
+                      )
+                    `
+                  }}></div>
+                </div>
+                
+                {/* Checkered flag pattern */}
+                <div className="absolute inset-0 opacity-5">
+                  <div className="w-full h-full" style={{
+                    backgroundImage: `
+                      linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+                      linear-gradient(-45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+                      linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.1) 75%),
+                      linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.1) 75%)
+                    `,
+                    backgroundSize: '20px 20px',
+                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
+                  }}></div>
+                </div>
               </div>
+              
               <div className="relative z-10">
                 <Navbar />
                 <ComparePage />

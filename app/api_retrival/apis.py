@@ -74,6 +74,7 @@ def get_driver_race(year):
     
 
 
+
 @app.route('/api/constructor_race/<int:year>', methods=['GET'])
 def get_constructor_race(year):
     """Fetches all driver race from the Driver table and returns them as JSON."""
@@ -103,6 +104,11 @@ def get_constructor_race(year):
 
 @app.route('/api/driver_stats/<int:driver_id>', methods=['GET'])
 def get_driver_stats(year):
+
+
+@app.route('/api/constructor_race/<int:year>', methods=['GET'])
+def get_driver_race(year):
+
     """Fetches all driver race from the Driver table and returns them as JSON."""
     try:
         conn = get_db_connection()
@@ -157,6 +163,7 @@ def get_query(queryString):
     except Exception as e:
         print(f"An error occurred: {e}")
         return jsonify({"error": "An unexpected error occurred"}), 500
+
 
 # --- Run the Flask App ---
 if __name__ == '__main__':

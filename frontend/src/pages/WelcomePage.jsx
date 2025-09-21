@@ -6,23 +6,27 @@ export default function WelcomePage() {
   const features = [
     {
       icon: FaTachometerAlt,
-      title: " Dashboard",
-      description: "Live F1 data and statistics at your fingertips"
+      title: "Dashboard",
+      description: "Live F1 data and statistics at your fingertips",
+      path: "/dashboard"
     },
     {
       icon: FaTrophy,
       title: "Driver Rankings",
-      description: "Comprehensive driver and constructor standings"
+      description: "Comprehensive driver and constructor standings",
+      path: "/rankings"
     },
     {
       icon: FaChartLine,
       title: "Predictions",
-      description: "Machine Learning algorithm race predictions and analysis"
+      description: "Machine Learning algorithm race predictions and analysis",
+      path: "/predictions"
     },
     {
       icon: FaBalanceScale,
       title: "Compare Drivers",
-      description: "Side-by-side driver performance comparisons"
+      description: "Side-by-side driver performance comparisons",
+      path: "/compare"
     }
   ];
 
@@ -68,9 +72,10 @@ export default function WelcomePage() {
               {features.map((feature, index) => {
                 const Icon = feature.icon;
                 return (
-                  <div
+                  <Link
                     key={index}
-                    className="bg-black/20 backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:bg-white/5 transition-all duration-200 group"
+                    to={feature.path}
+                    className="bg-black/20 backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:bg-white/5 transition-all duration-200 group cursor-pointer hover:scale-105 hover:shadow-lg"
                   >
                     <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform">
                       <Icon className="w-6 h-6 text-white" />
@@ -81,7 +86,10 @@ export default function WelcomePage() {
                     <p className="text-gray-400 text-sm">
                       {feature.description}
                     </p>
-                  </div>
+                    <div className="mt-4 flex items-center justify-center text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <FaArrowRight className="w-4 h-4" />
+                    </div>
+                  </Link>
                 );
               })}
             </div>
