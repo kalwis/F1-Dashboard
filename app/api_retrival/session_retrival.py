@@ -1,4 +1,5 @@
 #pip install fastf1
+import os
 import fastf1
 from fastf1.ergast import Ergast
 from datetime import datetime
@@ -30,6 +31,9 @@ def get_session_indivdual_pre(year, round, session_num):
 
 #get any session, will return empty dataframe if it doesnt exist in the database or is invalid
 def get_session(year, round):
+    CACHE_DIR = 'fastf1_cache'
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    fastf1.Cache.enable_cache(CACHE_DIR)
     if year > datetime.now().year or year < 1950:
         return pd.DataFrame()
     
@@ -89,8 +93,8 @@ def get_session(year, round):
             a["Q3"] = 0
             a['QualifyingPosition'] = 0
             final = a
-
-        final["CircuitLocation"] = circuits.loc[round -1, 'locality']
+        
+        final["CircuitLocation"] = Ergast().get_circuits(year, round).loc[0, 'locality']
         
         
     else:
@@ -130,7 +134,7 @@ def get_rounds_count(year):
 
 if __name__ == "__main__":
     
-    print(get_session(2003,1))
+    print(get_session(2021,20))
 
 
     

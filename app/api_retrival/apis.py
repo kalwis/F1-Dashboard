@@ -74,8 +74,9 @@ def get_driver_race(year):
     
 
 
+
 @app.route('/api/constructor_race/<int:year>', methods=['GET'])
-def get_driver_race(year):
+def get_constructor_race(year):
     """Fetches all driver race from the Driver table and returns them as JSON."""
     try:
         conn = get_db_connection()
@@ -99,6 +100,70 @@ def get_driver_race(year):
     except Exception as e:
         print(f"An error occurred: {e}")
         return jsonify({"error": "An unexpected error occurred"}), 500
+    
+
+@app.route('/api/driver_stats/<int:driver_id>', methods=['GET'])
+def get_driver_stats(year):
+
+
+@app.route('/api/constructor_race/<int:year>', methods=['GET'])
+def get_driver_race(year):
+
+    """Fetches all driver race from the Driver table and returns them as JSON."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        query = "SELECT * From Constructor_Race INNER JOIN Race ON Constructor_Race.race_id = Race.race_id WHERE year = ?;"
+        cursor.execute(query, (year,))
+        
+        drivers = cursor.fetchall()
+        conn.close()
+        
+        # Convert the database rows to a list of dictionaries
+        # This makes it easy to convert to JSON
+        drivers_list = [dict(row) for row in drivers]
+        
+        return jsonify(drivers_list)
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        # Return an error response
+        return jsonify({"error": "Failed to retrieve data from the database"}), 500
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+    
+@app.route('/api/query/<string:queryString>', methods=['GET'])
+def get_query(queryString):
+    """Fetches by query and returns them as JSON."""
+    j = ["INSERT", "UPDATE", "DELETE", "TRUNCATE", "CREATE", "DROP", "ALTER", "GRANT", "REVOKE"]
+    for i in j:
+        if str(str.upper(queryString)).__contains__(i):
+            return jsonify({"error": "Cannot use that statment"}), 500
+    try:
+        print(queryString)
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        
+        cursor.execute(queryString)
+        
+        drivers = cursor.fetchall()
+        conn.close()
+        
+        # Convert the database rows to a list of dictionaries
+        # This makes it easy to convert to JSON
+        drivers_list = [dict(row) for row in drivers]
+        
+        return jsonify(drivers_list)
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        # Return an error response
+        return jsonify({"error": "Failed to retrieve data from the database"}), 500
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+
 
 # --- Run the Flask App ---
 if __name__ == '__main__':

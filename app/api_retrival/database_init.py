@@ -4,7 +4,9 @@ import fastf1
 from fastf1 import utils
 from datetime import datetime
 from fastf1.ergast import Ergast
-from session_retrival import get_session
+from combine_elo_session import get_sql_session_elos
+import random, time
+
 
 import pandas as pd
 
@@ -34,6 +36,7 @@ def reset_tables():
     DROP TABLE IF EXISTS Race;
     DROP TABLE IF EXISTS Session;
     DROP TABLE IF EXISTS Driver_Race;
+    DROP TABLE IF EXISTS Constructor_Race;
 
     CREATE TABLE IF NOT EXISTS Driver (
             driver_id INTEGER PRIMARY KEY,
@@ -52,11 +55,11 @@ def reset_tables():
     CREATE TABLE IF NOT EXISTS Constructor_Race (
         constructor_race_id INTEGER PRIMARY KEY AUTOINCREMENT,
         constructor_id INTEGER NOT NULL,
-        year INTEGER NOT NULL,
-        round INTEGER NOT NULL,
-        elo REAL DEFAULT NULL,
-        FOREIGN KEY (constructor_id) REFERENCES Constructor(constructor_id),
-        UNIQUE(constructor_id, year, round)  -- prevents duplicates
+        race_id INTEGER NOT NULL,
+        elo INTEGER,
+        UNIQUE(constructor_id, race_id),
+        FOREIGN KEY (constructor_id) REFERENCES Constructor(constructor_id)
+        FOREIGN KEY (race_id) REFERENCES Race(race_id)
     );
 
     CREATE TABLE IF NOT EXISTS Race (
@@ -74,16 +77,38 @@ def reset_tables():
         driver_id INTEGER NOT NULL,
         constructor_id INTEGER NOT NULL,
         race_id INTEGER NOT NULL,
+        GridPosition INTEGER,
+        Laps INTEGER,
+        RaceTime TEXT,
+        Status TEXT,
         Q1 TEXT,
         Q2 TEXT,
         Q3 TEXT,
+        qualifying_position INTEGER,
         position INTEGER,
-        points REAL,
-        elo REAL,
+        points INTEGER,
+        elo INTEGER,
+        combined_elo INTEGER,
         FOREIGN KEY (driver_id) REFERENCES Driver(driver_id),
         FOREIGN KEY (constructor_id) REFERENCES Constructor(constructor_id),
         FOREIGN KEY (race_id) REFERENCES Race(race_id)
     );
+
+    CREATE TABLE IF NOT EXISTS Advanced (
+        advanced_race_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        driver_race_id  INTEGER NOT NULL,
+        avg_lap_time TEXT,
+        qualifying_time REAL,
+        sector1 REAL,
+        sector2 REAL,
+        sector3 REAL,
+        model_used TEXT,
+        FOREIGN KEY (driver_race_id) REFERENCES Driver_Race(driver_race_id)    
+
+    );          
+
+
+
     """)
     conn.commit()
     conn.close()
@@ -151,21 +176,77 @@ def insert_session(conn, race_id, session_type, date):
     return cur.execute("SELECT session_id FROM Session WHERE race_id=? AND session_type=?", (race_id, session_type)).fetchone()[0]
 
 
-def insert_driver_race(conn, driver_id, constructor_id, race_id, q1, q2, q3, position, points, elo):
+def insert_driver_race(
+    conn,
+    driver_id,
+    constructor_id,
+    race_id,
+    grid_position,
+    laps,
+    race_time,
+    status,
+    q1,
+    q2,
+    q3,
+    qualifying_position,
+    position,
+    points,
+    elo,
+    combined_elo
+):
     cur = conn.cursor()
+    
     cur.execute("""
-        INSERT INTO Driver_Race (driver_id, constructor_id, race_id, Q1, Q2, Q3, position, points, elo)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (driver_id, constructor_id, race_id, q1, q2, q3, position, points, elo))
-    conn.commit()
+        SELECT driver_race_id 
+        FROM Driver_Race 
+        WHERE driver_id=? AND race_id=?
+    """, (driver_id, race_id))
 
-def insert_constructor_race(conn, constructor_id, year, round, elo):
-    cur = conn.cursor()
+    existing = cur.fetchone()
+    if existing:
+        return existing[0]  # Return existing ID
+
+    
     cur.execute("""
-        INSERT INTO Constructor_Race (constructor_id, year, round, elo)
-        VALUES (?, ?, ?, ?)
-    """, (constructor_id, year, round, elo))
+        INSERT INTO Driver_Race (
+            driver_id, constructor_id, race_id,
+            GridPosition, Laps, RaceTime, Status,
+            Q1, Q2, Q3, qualifying_position,
+            position, points, elo,combined_elo
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+    """, (
+        driver_id, constructor_id, race_id,
+        int(grid_position), int(laps), race_time, status,
+        q1, q2, q3, qualifying_position,
+        position, points, int(elo), int(combined_elo)
+    ))
     conn.commit()
+    return cur.lastrowid
+
+
+def insert_constructor_race(conn, constructor_id, race_id, elo):
+    cur = conn.cursor()
+
+    # Check if this constructor already has an entry for this year+round
+    cur.execute("""
+        SELECT constructor_race_id 
+        FROM Constructor_Race 
+        WHERE constructor_id=? AND race_id=?
+    """, (constructor_id, race_id))
+
+    existing = cur.fetchone()
+    if existing:
+        return existing[0]  # Return existing ID
+
+    # Insert new row
+    cur.execute("""
+        INSERT INTO Constructor_Race (constructor_id, race_id, elo)
+        VALUES (?, ?, ?)
+    """, (constructor_id, race_id, int(elo) if elo is not None else None))
+    conn.commit()
+    
+    return cur.lastrowid
 
 
 
@@ -179,75 +260,77 @@ def format_quali_time(val):
 # ==========================
 def populate_for_season(year):
     print(f"\n=== Processing {year} season ===")
-    
-    # For schedules: use fastf1 if year >= 2018, otherwise Ergast
-    if year >= 2018:
-        schedule = fastf1.get_event_schedule(year, include_testing=False)
-    else:
-        schedule = Ergast().get_circuits(year)
-        schedule["RoundNumber"] = range(1, len(schedule) + 1)
-        schedule.rename(columns={"circuitName": "EventName", "locality": "Location"}, inplace=True)
-        schedule["EventDate"] = None  # Ergast doesnt provide event date reliably
 
-    for _, event in schedule.iterrows():
-        race_name = event['EventName']
-        round_number = event['RoundNumber']
-        circuit = event['Location']
-        race_date = (
-            event['EventDate'].strftime('%Y-%m-%d') 
-            if 'EventDate' in event and pd.notnull(event['EventDate']) 
-            else None
-        )
+    # Get all driver results for the season in one go
+    results = get_sql_session_elos(year)
+    if results.empty:
+        print(f"No results for {year}")
+        return
+
+    conn = sqlite3.connect(DB_FILE)
+
+    # Group by round to process race info
+    for round_number, round_df in results.groupby("Round"):
+        race_name = round_df["EventName"].iloc[0] if "EventName" in round_df else f"Round {round_number}"
+        circuit = round_df["CircuitLocation"].iloc[0] if "CircuitLocation" in round_df else None
+        race_date = round_df["EventDate"].iloc[0] if "EventDate" in round_df else None
 
         print(f"  -> {race_name} (Round {round_number})")
 
-        conn = sqlite3.connect(DB_FILE)
         race_id = insert_race(conn, year, round_number, race_name, circuit, race_date)
-
-        # Use your unified get_session function
-        results = get_session(year, round_number)
-        if results.empty:
-            conn.close()
-            continue
-
-        for _, row in results.iterrows():
+        
+        for _, row in round_df.iterrows():
             driver_id = insert_driver(
                 conn,
-                row.get('DriverId'),
-                row.get('FirstName'),
-                row.get('LastName'),
-                row.get('DriverUrl'),
-                row.get('CountryName')  # Ergast gives nationality
+                row.get("DriverId"),
+                row.get("FirstName"),
+                row.get("LastName"),
+                row.get("DriverUrl"),
+                row.get("CountryName")
             )
-            constructor_id = insert_constructor(conn, row['ConstructorName'])
-            insert_constructor_race(conn, constructor_id, year, round_number, None)
+            constructor_id = insert_constructor(conn, row["ConstructorName"])
+            
+            constructor_elo = row.get("ConstructorElo")
+            # Insert constructor race (elo starts null unless provided)
+            insert_constructor_race(conn, constructor_id, race_id, constructor_elo)
 
-            q1 = format_quali_time(row.get('Q1')) if 'Q1' in row else None
-            q2 = format_quali_time(row.get('Q2')) if 'Q2' in row else None
-            q3 = format_quali_time(row.get('Q3')) if 'Q3' in row else None
+            racetime = format_quali_time(row.get("RaceTime")) if "RaceTime" in row else None
+            q1 = format_quali_time(row.get("Q1")) if "Q1" in row else None
+            q2 = format_quali_time(row.get("Q2")) if "Q2" in row else None
+            q3 = format_quali_time(row.get("Q3")) if "Q3" in row else None
 
-            position = row.get('RacePosition')
-            points = row.get('Points')
-            elo = None
+            position = row.get("RacePosition")
+            points = row.get("Points")
+            elo = row.get("DriverElo", None)
 
             insert_driver_race(
                 conn, driver_id, constructor_id, race_id,
-                q1, q2, q3, position, points, elo
+                row.get("GridPosition"),
+                row.get("Laps"),
+                racetime,
+                row.get("Status"),
+                q1, q2, q3,
+                row.get("QualifyingPosition"),
+                row.get("RacePosition"),
+                row.get("Points"),
+                row.get("DriverElo"),
+                row.get("DriverCombinedElo")
             )
 
-        conn.close()
+    conn.close()
+
 
 
 
 
 
 if __name__ == "__main__":
-    reset_tables()
+    #reset_tables()
     
-    for yr in range(2008, current_year + 1):
+    for yr in range(2021, current_year):
         populate_for_season(yr)
+        print(f"Populated data for {yr} season.")
+        time.sleep(20 + random.uniform(0.5, 2.0))  # 30-32s pause
 
-    print("\n Database populated for all seasons from 2008 onwards.")
-
-
+    print("\n Database populated for all seasons from 2020 onwards.")
     
