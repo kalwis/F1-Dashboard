@@ -104,10 +104,11 @@ def get_constructor_race(year):
 
 @app.route('/api/driver_stats/<int:driver_id>', methods=['GET'])
 def get_driver_stats(year):
-
+    pass
 
 @app.route('/api/constructor_race/<int:year>', methods=['GET'])
 def get_driver_race(year):
+
 
     """Fetches all driver race from the Driver table and returns them as JSON."""
     try:
