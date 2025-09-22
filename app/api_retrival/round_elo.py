@@ -15,7 +15,7 @@ def add_elo_rating(year, round, previous_elo, elo_type, k_modifiers, round_resul
     if new_drivers_rows[1] == True:
         new_elo_frame = pd.concat([new_elo_frame, new_drivers_rows[0]], ignore_index=True)
 
-
+    
     new_elo_frame = calculate_elo(round_results, elo_type, new_elo_frame, round, k_modifiers)
 
 
@@ -32,24 +32,30 @@ def calculate_elo(round_results, elo_type, new_elo_frame, round, k_modifiers):
             
             elo_A = new_elo_frame[new_elo_frame[elo_type] == player_A[elo_type]][round - 1].iloc[0]
             elo_B = new_elo_frame[new_elo_frame[elo_type] == player_B[elo_type]][round - 1].iloc[0]
+            
+            
             actual_result_A = determine_actual_Result(player_A["RacePosition"],player_B["RacePosition"] )
             player_A_chance = determine_win_chance(elo_A, elo_B)
             #could make it so the big function passes in a k value (maybe not possible cos its diff, or maybe so the function passes in what to use to get k value)
             a = 1
             if k_modifiers is not None:
                 
+                
                 k_modifiers = k_modifiers.drop_duplicates(subset=["ConstructorName"], keep="first")
                 
                 a = calculate_k_combined(actual_result_A, k_modifiers[k_modifiers["ConstructorName"] == player_A["ConstructorName"]][round].values[0], k_modifiers[k_modifiers["ConstructorName"] == player_B["ConstructorName"]][round].values[0]) 
-                
+            
             new_player_A_elo = (a*calculate_k(player_A["GridPosition"], player_B["GridPosition"]))*(actual_result_A - player_A_chance)
-
+            
             new_elo_frame.loc[new_elo_frame[elo_type] == player_A[elo_type], round] += new_player_A_elo
+            
     return new_elo_frame
     
 def calculate_k(gridPositionA, gridPositionB):
     k = 30
     k += gridPositionA - gridPositionB
+    if str(gridPositionA) == "nan" or str(gridPositionB) == "nan":
+        return 30
     #k += 7*calculate_k_combined(constructor_A, constructor_B)
     return k
 
@@ -72,12 +78,15 @@ def determine_win_chance(elo_rating_A, elo_rating_B):
     return exp1/exp2
 
 def determine_actual_Result(rank_A, rank_B):
+
     if rank_A == rank_B:
         return 0.5
     elif rank_A < rank_B:
         return 1
     elif rank_B < rank_A:
         return 0
+    
+    return 0.5
     
 
 def check_new_drivers(session, existing_elo, elo_type):
@@ -114,10 +123,13 @@ def get_season_elos(year):
 
     
     for i in range(1,round_count+1):
+        print("XXX", i)
         res = fn.get_session(year, i)
         j = add_elo_rating(year, i, j, elo_types[1], None, res)
+       
+     
         m = add_elo_rating(year, i, m, elo_types[0], j[["ConstructorName", i]], res) 
-
+       
         player_elo = add_elo_rating(year, i, player_elo, elo_types[0], None, res) 
     
 
