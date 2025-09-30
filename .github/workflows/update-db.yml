@@ -24,7 +24,7 @@ jobs:
 
       - name: Run updater
         run: |
-          python your_update_file.py
+          python app/api_retrival/update.py
 
       - name: Commit database changes
         run: |
