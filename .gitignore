@@ -1,1 +1,9 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# FastF1 cache
 fastf1_cache/
+
+# SQLite cache if generated
+*.sqlite
