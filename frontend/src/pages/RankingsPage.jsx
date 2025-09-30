@@ -6,19 +6,46 @@ export default function RankingsPage() {
   const [combinedRankings, setCombinedRankings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(null);
+  const [availableYears, setAvailableYears] = useState([]);
 
+  // Fetch available years on component mount
   useEffect(() => {
+    const fetchAvailableYears = async () => {
+      try {
+        const response = await fetch('http://localhost:5001/api/years');
+        const years = await response.json();
+        setAvailableYears(years);
+        // Set the latest year as default
+        if (years.length > 0) {
+          setSelectedYear(years[0]);
+        }
+      } catch (err) {
+        console.error('Error fetching available years:', err);
+      }
+    };
+
+    fetchAvailableYears();
+  }, []);
+
+  // Fetch rankings when selectedYear changes
+  useEffect(() => {
+    if (selectedYear === null) return; // Don't fetch until we have a year selected
+
     const fetchRankings = async () => {
       try {
         setLoading(true);
         
+        // Build URL with year parameter if selected
+        const yearParam = selectedYear ? `?season=${selectedYear}` : '';
+        
         // Fetch driver Elo rankings
-        const driverResponse = await fetch('https://f1-dashboard-doj4.onrender.com/api/rankings/drivers/elo');
+        const driverResponse = await fetch(`http://localhost:5001/api/rankings/drivers/elo${yearParam}`);
         const driverData = await driverResponse.json();
         setDriverRankings(driverData.slice(0, 20)); // Top 20 drivers
         
         // Fetch combined rankings
-        const combinedResponse = await fetch('https://f1-dashboard-doj4.onrender.com/api/rankings/combined');
+        const combinedResponse = await fetch(`http://localhost:5001/api/rankings/combined${yearParam}`);
         const combinedData = await combinedResponse.json();
         setCombinedRankings(combinedData.slice(0, 20)); // Top 20 combined
         
@@ -32,7 +59,7 @@ export default function RankingsPage() {
     };
 
     fetchRankings();
-  }, []);
+  }, [selectedYear]);
 
   const getPositionColor = (position) => {
     switch (position) {
@@ -71,8 +98,34 @@ export default function RankingsPage() {
         Driver & Constructor Rankings
       </h1>
 
+      {/* Year Selector */}
+      <div className="mb-6 flex flex-col sm:flex-row items-center gap-4">
+        <label htmlFor="year-select" className="text-sm font-medium text-gray-700 whitespace-nowrap">
+          Select Season:
+        </label>
+        <select
+          id="year-select"
+          value={selectedYear || ''}
+          onChange={(e) => setSelectedYear(e.target.value ? parseInt(e.target.value) : null)}
+          className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[120px]"
+          disabled={loading}
+        >
+          <option value="">All Time</option>
+          {availableYears.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
+        {selectedYear && (
+          <span className="text-sm text-gray-600">
+            Showing rankings for {selectedYear} season
+          </span>
+        )}
+      </div>
+
       {/* Driver Rankings (F4) */}
-      <DashboardCard title="Driver Elo Rankings">
+      <DashboardCard title={`Driver Elo Rankings${selectedYear ? ` (${selectedYear})` : ' (All Time)'}`}>
         <div className="space-y-2 max-h-60 overflow-y-auto">
           {driverRankings.map((driver, index) => (
             <div key={driver.driver_id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
@@ -104,7 +157,7 @@ export default function RankingsPage() {
       </DashboardCard>
 
       {/* Combined Driver-Constructor Rankings (F5) */}
-      <DashboardCard title="Combined Driver-Car Elo">
+      <DashboardCard title={`Combined Driver-Car Elo${selectedYear ? ` (${selectedYear})` : ' (All Time)'}`}>
         <div className="space-y-2 max-h-60 overflow-y-auto">
           {combinedRankings.map((entry, index) => (
             <div key={`${entry.driver_id}-${entry.constructor_id}`} className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
@@ -137,7 +190,7 @@ export default function RankingsPage() {
 
       {/* Filtering Note */}
       <div className="text-sm text-gray-600 mt-4">
-        Users can filter these rankings by race, season, driver, or constructor for deeper exploration. (F7)
+        Rankings can now be filtered by season using the year selector above. Additional filtering by race, driver, or constructor is available for deeper exploration. (F7)
       </div>
     </div>
   );
