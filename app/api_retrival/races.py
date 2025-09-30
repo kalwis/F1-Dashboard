@@ -7,7 +7,7 @@ DB_FILE = 'app/api_retrival/database/f1_data.db'
 
 def getRaces(year):
     a = fastf1.get_event_schedule(year)
-    a = a[["RoundNumber", "Country", "Location", "EventDate"]]
+    a = a[["RoundNumber", "EventName", "Country", "Location", "EventDate"]]
     a["Year"] = year
     return a
 
@@ -15,7 +15,6 @@ def update_race_info():
     conn = sqlite3.connect(DB_FILE)
     cur = conn.cursor()
 
-    # Loop through all years currently in DB
     cur.execute("SELECT DISTINCT year FROM Race")
     years = [row[0] for row in cur.fetchall()]
 
@@ -24,6 +23,7 @@ def update_race_info():
 
         for _, row in races.iterrows():
             rnd = int(row["RoundNumber"])
+            name = str(row["EventName"]) if row["EventName"] else None
             location = str(row["Location"]) if row["Location"] else None
             date = None
             if pd.notna(row["EventDate"]):
@@ -31,13 +31,14 @@ def update_race_info():
 
             cur.execute("""
                 UPDATE Race
-                SET circuit = ?, date = ?
+                SET name = ?, circuit = ?, date = ?
                 WHERE year = ? AND round = ?
-            """, (location, date, year, rnd))
+            """, (name, location, date, year, rnd))
 
     conn.commit()
     conn.close()
-    print("Race table updated with circuit location and date.")
+    print("Race table updated with name, circuit, and date.")
+
 
 if __name__ == "__main__":
     update_race_info()
