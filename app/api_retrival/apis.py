@@ -44,7 +44,6 @@ def get_drivers():
     except Exception as e:
         print(f"An error occurred: {e}")
         return jsonify({"error": "An unexpected error occurred"}), 500
-    
 
 @app.route('/api/driver_race/<int:year>', methods=['GET'])
 def get_driver_race(year):

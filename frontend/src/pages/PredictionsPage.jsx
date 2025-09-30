@@ -183,7 +183,6 @@ export default function PredictionsPage() {
     );
   }
 
-  // Error popup component
   const ErrorPopup = () => {
     if (!showErrorPopup) return null;
 
