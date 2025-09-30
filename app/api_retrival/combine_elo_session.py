@@ -83,16 +83,18 @@ def merge_session_elos(elo_tables, session):
 
 
 def get_sql_session_elos(year):
-    """
-    Build full session-level dataframe with driver & constructor elos
-    across all rounds in a season.
-    """
     elo_tables = fn2.get_season_elos(year)
     results = pd.DataFrame()
     
+    # Only loop until the last completed race
+    today = pd.Timestamp.now(tz="UTC")
+    schedule = fastf1.get_event_schedule(year)
+    completed = schedule[schedule["EventDate"] < today]
     
-    for rnd in range(1, 18):
-        session = fn1.get_session(year, rnd)
+    for rnd in completed["RoundNumber"]:
+        session = fn1.get_session(year, int(rnd))
+        if session is None or session.empty:
+            continue
         
         session_merged = merge_session_elos(elo_tables, session)
         results = pd.concat([results, session_merged], ignore_index=True)
