@@ -33,3 +33,4 @@ jobs:
           git add app/api_retrival/database/f1_data.db
           git commit -m "Auto-update DB after race" || echo "No changes to commit"
           git push
+
