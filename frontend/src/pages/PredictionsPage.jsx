@@ -13,18 +13,11 @@ export default function PredictionsPage() {
   const [raceCalendar, setRaceCalendar] = useState([]);
 
   const getAvailableRaces = (calendar) => {
-    const today = new Date();
     const available = [];
     
-    // Check races in chronological order
+    // Return all races that have qualifying data available
     for (const race of calendar) {
-      const raceDate = new Date(race.date);
-      // Consider race available if it's within 2 weeks of today (allowing for qualifying data)
-      const twoWeeksAgo = new Date(today.getTime() - (14 * 24 * 60 * 60 * 1000));
-      
-      if (raceDate <= twoWeeksAgo) {
-        available.push(race.raceName || race.name);
-      }
+      available.push(race.name); // Use the mapped prediction name, not the full race name
     }
     
     return available;
