@@ -102,7 +102,7 @@ def get_sql_session_elos(year):
 
 if __name__ == "__main__":
     #fn1.get_rounds_count(2017)
-    x = get_sql_session_elos(2021)
-    print(x)
+    x = get_sql_session_elos(2017)
+    print(x.columns)
 
 
