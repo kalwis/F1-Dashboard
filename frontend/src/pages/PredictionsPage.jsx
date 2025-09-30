@@ -163,10 +163,15 @@ export default function PredictionsPage() {
 
   if (checkingRaces) {
     return (
-      <div className="p-6 font-sans text-gray-200 max-w-7xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center md:text-left text-white">
-          Race Predictions
-        </h1>
+      <div className="pt-20 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white bg-gradient-to-r from-blue-400 via-purple-500 to-red-500 bg-clip-text text-transparent">
+            Race Predictions
+          </h1>
+          <p className="text-lg text-white/70 max-w-4xl mx-auto whitespace-nowrap">
+            Machine learning race predictions based on qualifying results and tire degradation analysis
+          </p>
+        </div>
         <div className="text-center text-white/60">Loading...</div>
       </div>
     );
@@ -174,12 +179,17 @@ export default function PredictionsPage() {
 
   if (availableRaces.length === 0) {
     return (
-      <div className="p-6 font-sans text-gray-200 max-w-7xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center md:text-left text-white">
-          Race Predictions
-        </h1>
+      <div className="pt-20 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white bg-gradient-to-r from-blue-400 via-purple-500 to-red-500 bg-clip-text text-transparent">
+            Race Predictions
+          </h1>
+          <p className="text-lg text-white/70 max-w-4xl mx-auto whitespace-nowrap">
+            Machine learning race predictions based on qualifying results and tire degradation analysis
+          </p>
+        </div>
         <div className="text-center text-white/60">
-          <div className="mb-4">No 2025 races have occurred yet.</div>
+          <div className="mb-4 text-xl">No 2025 races have occurred yet.</div>
           <div className="text-sm">Race predictions will be available once qualifying sessions have taken place.</div>
         </div>
       </div>
@@ -188,10 +198,15 @@ export default function PredictionsPage() {
 
   if (loading) {
     return (
-      <div className="p-6 font-sans text-gray-200 max-w-7xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center md:text-left text-white">
-          Race Predictions
-        </h1>
+      <div className="pt-20 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white bg-gradient-to-r from-blue-400 via-purple-500 to-red-500 bg-clip-text text-transparent">
+            Race Predictions
+          </h1>
+          <p className="text-lg text-white/70 max-w-4xl mx-auto whitespace-nowrap">
+            Machine learning race predictions based on qualifying results and tire degradation analysis
+          </p>
+        </div>
         <div className="text-center text-white/60">Loading race predictions...</div>
       </div>
     );
@@ -236,55 +251,62 @@ export default function PredictionsPage() {
   return (
     <>
       <ErrorPopup />
-      <div className="p-6 font-sans text-gray-200 max-w-7xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center md:text-left text-white">
-          Race Predictions
-        </h1>
-
-      {/* GP Selection */}
-      <GPSSelector
-        selectedGP={selectedRace}
-        setSelectedGP={setSelectedRace}
-        availableGPs={availableRaces}
-        loading={loading}
-      />
-
-      {!selectedRace && (
-        <div className="text-center text-white/60 mt-8 p-6 bg-black/10 rounded-lg border border-white/10">
-          <div className="text-lg mb-2">Select a race above to view predictions</div>
-          <div className="text-sm">Choose from the available 2025 races to see tire degradation analysis and race position predictions</div>
+      <div className="pt-20 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white bg-gradient-to-r from-blue-400 via-purple-500 to-red-500 bg-clip-text text-transparent">
+            Race Predictions
+          </h1>
+          <p className="text-lg text-white/70 max-w-4xl mx-auto whitespace-nowrap">
+            Machine learning race predictions based on qualifying results and tire degradation analysis
+          </p>
         </div>
-      )}
+
+        {/* GP Selection Section */}
+        <div className="mb-8">
+          <GPSSelector
+            selectedGP={selectedRace}
+            setSelectedGP={setSelectedRace}
+            availableGPs={availableRaces}
+            loading={loading}
+          />
+        </div>
+
+        {!selectedRace && (
+          <div className="text-center text-white/60 mt-8 p-8 bg-gradient-to-r from-black/20 to-black/10 rounded-xl border border-white/10 backdrop-blur-sm">
+            <div className="text-xl mb-3 font-medium">Select a race above to view predictions</div>
+            <div className="text-sm">Choose from the available 2025 races to see tire degradation analysis and race position predictions</div>
+          </div>
+        )}
 
       {predictions && (
-        <>
+        <div className="space-y-8">
           {/* Race Predictions */}
-          <DashboardCard title={`2025 ${selectedRace} GP - Race Predictions`}>
-            <div className="overflow-x-auto">
+          <DashboardCard title={`🏁 2025 ${selectedRace} GP - Race Predictions`}>
+            <div className="overflow-x-auto max-h-[32rem] overflow-y-auto">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="text-left text-white/80">
-                    <th className="pb-2">Predicted</th>
-                    <th className="pb-2">Driver</th>
-                    <th className="pb-2">Team</th>
-                    <th className="pb-2">Qualifying</th>
-                    <th className="pb-2">Q Time</th>
-                    <th className="pb-2">Tire Deg</th>
-                    <th className="pb-2">Confidence</th>
+                  <tr className="text-left text-white/80 border-b border-white/10">
+                    <th className="pb-3 font-semibold">Predicted</th>
+                    <th className="pb-3 font-semibold">Driver</th>
+                    <th className="pb-3 font-semibold">Team</th>
+                    <th className="pb-3 font-semibold">Qualifying</th>
+                    <th className="pb-3 font-semibold">Q Time</th>
+                    <th className="pb-3 font-semibold">Tire Performance</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {predictions.predictions.map((prediction) => {
+                  {predictions.predictions.slice(0, 20).map((prediction) => {
                     const positionChange = prediction.predicted_race_position - prediction.qualifying_position;
                     const teamName = teamMapping[prediction.driver_code] || 'Unknown';
                     
                     return (
-                      <tr key={prediction.position} className="border-t border-white/10">
-                        <td className="py-2 pr-4">
+                      <tr key={prediction.position} className="border-t border-white/10 hover:bg-white/5 transition-colors">
+                        <td className="py-3 pr-4">
                           <div className="flex items-center gap-2">
                             <span className="text-white font-bold text-lg">{prediction.predicted_race_position}</span>
                             {positionChange !== 0 && (
-                              <span className={`text-xs px-1 py-0.5 rounded ${
+                              <span className={`text-xs px-2 py-1 rounded-full font-medium ${
                                 positionChange < 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
                               }`}>
                                 {positionChange < 0 ? `+${Math.abs(positionChange)}` : `-${positionChange}`}
@@ -292,43 +314,45 @@ export default function PredictionsPage() {
                             )}
                           </div>
                         </td>
-                        <td className="py-2 pr-4 text-white font-medium">{prediction.driver}</td>
-                        <td className="py-2 pr-4 text-white/80 text-xs">{teamName}</td>
-                        <td className="py-2 pr-4 text-white/80">P{prediction.qualifying_position}</td>
-                        <td className="py-2 pr-4 text-white/80 text-xs">
+                        <td className="py-3 pr-4 text-white font-medium">{prediction.driver}</td>
+                        <td className="py-3 pr-4 text-white/80 text-sm">{teamName}</td>
+                        <td className="py-3 pr-4 text-white/80 font-medium">P{prediction.qualifying_position}</td>
+                        <td className="py-3 pr-4 text-white/80 text-sm">
                           {prediction.qualifying_time ? `${prediction.qualifying_time.toFixed(3)}s` : 'N/A'}
                         </td>
-                        <td className="py-2 pr-4 text-white/80">
+                        <td className="py-3 text-white/80">
                           {prediction.tire_deg_rate !== null && prediction.tire_deg_rate !== undefined ? (
-                            <div className="flex flex-col">
-                              <span className={`px-2 py-1 rounded text-xs ${
-                                prediction.tire_deg_rate < 0 ? 'bg-green-500/20 text-green-400' :
-                                prediction.tire_deg_rate < 0.5 ? 'bg-yellow-500/20 text-yellow-400' :
-                                'bg-red-500/20 text-red-400'
-                              }`}>
-                                {prediction.tire_deg_rate < 0 ? 'Excellent' :
-                                 prediction.tire_deg_rate < 0.5 ? 'Good' : 'Poor'}
-                              </span>
-                              <span className="text-xs text-white/60 mt-1">
-                                {prediction.tire_deg_rate.toFixed(3)}s/lap
-                              </span>
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  prediction.tire_deg_rate < 0 ? 'bg-green-500/20 text-green-400' :
+                                  prediction.tire_deg_rate < 0.5 ? 'bg-yellow-500/20 text-yellow-400' :
+                                  'bg-red-500/20 text-red-400'
+                                }`}>
+                                  {prediction.tire_deg_rate < 0 ? 'Excellent Tire Life' :
+                                   prediction.tire_deg_rate < 0.5 ? 'Good Tire Life' : 'Poor Tire Life'}
+                                </span>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  prediction.prediction_method === 'qualifying_and_tire_deg' ? 
+                                  'bg-blue-500/20 text-blue-400' : 'bg-orange-500/20 text-orange-400'
+                                }`}>
+                                  {prediction.prediction_method === 'qualifying_and_tire_deg' ? 'High Confidence' : 'Medium Confidence'}
+                                </span>
+                              </div>
+                              <div className="text-xs text-white/60">
+                                Tire degradation: {prediction.tire_deg_rate.toFixed(3)}s/lap
+                              </div>
                             </div>
                           ) : (
-                            <span className="text-white/40 text-xs">No data</span>
+                            <div className="flex flex-col gap-2">
+                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-400">
+                                Qualifying Only
+                              </span>
+                              <span className="text-xs text-white/40">
+                                No tire data available
+                              </span>
+                            </div>
                           )}
-                        </td>
-                        <td className="py-2 text-white/60 text-xs">
-                          <div className="flex flex-col">
-                            <span className={`px-2 py-1 rounded text-xs ${
-                              prediction.prediction_method === 'qualifying_and_tire_deg' ? 
-                              'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
-                            }`}>
-                              {prediction.prediction_method === 'qualifying_and_tire_deg' ? 'High' : 'Medium'}
-                            </span>
-                            <span className="text-xs text-white/40 mt-1">
-                              {prediction.prediction_method === 'qualifying_and_tire_deg' ? 'Q + Tire' : 'Q only'}
-                            </span>
-                          </div>
                         </td>
                       </tr>
                     );
@@ -336,6 +360,11 @@ export default function PredictionsPage() {
                 </tbody>
               </table>
             </div>
+            {predictions.predictions.length > 20 && (
+              <div className="text-center text-white/60 mt-3 p-2 bg-black/10 rounded-lg border border-white/10">
+                Showing top 20 predictions. Total drivers: {predictions.predictions.length}
+              </div>
+            )}
             <p className="text-xs text-white/60 mt-2">
               Race predictions based on qualifying position and tire degradation analysis. 
               Priority: Sprint Race &gt; FP2 &gt; FP3. Lower tire degradation values indicate better race pace.
@@ -344,28 +373,38 @@ export default function PredictionsPage() {
           </DashboardCard>
 
           {/* Prediction Summary */}
-          <DashboardCard title="Prediction Summary">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-black/20 p-4 rounded-lg">
-                <div className="text-white/60 text-sm">Total Drivers</div>
-                <div className="text-white text-2xl font-bold">{predictions.predictions.length}</div>
+          <DashboardCard title="📊 Prediction Summary">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 p-6 rounded-xl border border-blue-500/20">
+                <div className="text-blue-300 text-sm font-medium mb-2">Total Drivers</div>
+                <div className="text-white text-3xl font-bold">{predictions.predictions.length}</div>
               </div>
-              <div className="bg-black/20 p-4 rounded-lg">
-                <div className="text-white/60 text-sm">With Tire Data</div>
-                <div className="text-white text-2xl font-bold">
+              <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 p-6 rounded-xl border border-green-500/20">
+                <div className="text-green-300 text-sm font-medium mb-2">With Tire Analysis</div>
+                <div className="text-white text-3xl font-bold">
                   {predictions.predictions.filter(p => p.tire_deg_rate !== null && p.tire_deg_rate !== undefined).length}
                 </div>
               </div>
-              <div className="bg-black/20 p-4 rounded-lg">
-                <div className="text-white/60 text-sm">High Confidence</div>
-                <div className="text-white text-2xl font-bold">
-                  {predictions.predictions.filter(p => p.prediction_method === 'qualifying_and_tire_deg').length}
+              <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 p-6 rounded-xl border border-orange-500/20">
+                <div className="text-orange-300 text-sm font-medium mb-2">Qualifying Only</div>
+                <div className="text-white text-3xl font-bold">
+                  {predictions.predictions.filter(p => p.tire_deg_rate === null || p.tire_deg_rate === undefined).length}
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 p-6 rounded-xl border border-purple-500/20">
+                <div className="text-purple-300 text-sm font-medium mb-2">Avg Position Change</div>
+                <div className="text-white text-3xl font-bold">
+                  {(() => {
+                    const changes = predictions.predictions.map(p => p.predicted_race_position - p.qualifying_position);
+                    const avgChange = changes.reduce((sum, change) => sum + change, 0) / changes.length;
+                    return avgChange > 0 ? `+${avgChange.toFixed(1)}` : avgChange.toFixed(1);
+                  })()}
                 </div>
               </div>
             </div>
-            <div className="mt-4 text-sm text-white/60">
-              <div className="font-semibold text-white mb-2">Position Changes:</div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="mt-6 p-4 bg-gradient-to-r from-black/20 to-black/10 rounded-xl border border-white/10">
+              <div className="font-semibold text-white mb-3">Position Changes:</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {(() => {
                   const changes = predictions.predictions.map(p => p.predicted_race_position - p.qualifying_position);
                   const gained = changes.filter(c => c < 0).length;
@@ -374,10 +413,22 @@ export default function PredictionsPage() {
                   
                   return (
                     <>
-                      <div className="text-green-400">↑ {gained} gained</div>
-                      <div className="text-red-400">↓ {lost} lost</div>
-                      <div className="text-white/60">= {same} same</div>
-                      <div className="text-white/60">±3 max change</div>
+                      <div className="text-center">
+                        <div className="text-green-400 text-lg font-bold">↑ {gained}</div>
+                        <div className="text-green-300 text-xs">gained</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-red-400 text-lg font-bold">↓ {lost}</div>
+                        <div className="text-red-300 text-xs">lost</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-white/60 text-lg font-bold">= {same}</div>
+                        <div className="text-white/40 text-xs">same</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-white/60 text-lg font-bold">±3</div>
+                        <div className="text-white/40 text-xs">max change</div>
+                      </div>
                     </>
                   );
                 })()}
@@ -386,21 +437,42 @@ export default function PredictionsPage() {
           </DashboardCard>
 
           {/* Methodology Info */}
-          <div className="text-sm text-white/60 mt-6 p-4 bg-black/10 rounded-lg border border-white/10">
-            <div className="space-y-2">
-              <div className="font-semibold text-white">Prediction Methodology:</div>
-              <div>• Uses qualifying results as baseline starting positions</div>
-              <div>• Analyzes tire degradation from practice sessions or sprint races</div>
-              <div>• Adjusts positions based on race pace and tire management</div>
-              <div>• Maximum position change: ±3 positions from qualifying</div>
-              <div>• Data source: FastF1 library with official F1 timing data</div>
+          <div className="text-sm text-white/60 p-6 bg-gradient-to-r from-black/20 to-black/10 rounded-xl border border-white/10">
+            <div className="space-y-3">
+              <div className="font-semibold text-white text-lg mb-4">🤖 Machine Learning Methodology:</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-400 mt-1">•</span>
+                    <span>Uses qualifying results as baseline starting positions</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-400 mt-1">•</span>
+                    <span>Analyzes tire degradation from practice sessions or sprint races</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-400 mt-1">•</span>
+                    <span>Machine learning model adjusts positions based on race pace patterns</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-400 mt-1">•</span>
+                    <span>Maximum position change: ±3 positions from qualifying</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-400 mt-1">•</span>
+                    <span>Data source: FastF1 library with official F1 timing data</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* Footer Sync Info */}
-      <div className="mt-6">
+      <div className="mt-12">
         <SyncStatus />
       </div>
       </div>

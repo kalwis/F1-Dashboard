@@ -33,13 +33,6 @@ export default function GPSSelector({
           ))}
         </div>
         
-        {/* Current Selection Display */}
-        {selectedGP && (
-          <div className="flex items-center gap-2 text-sm text-white/60">
-            <FaFlagCheckered className="text-blue-400" />
-            <span>Showing predictions for <span className="text-white font-medium">{selectedGP} GP</span></span>
-          </div>
-        )}
       </div>
     </div>
   );
