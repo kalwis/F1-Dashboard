@@ -98,6 +98,13 @@ def get_qualifying_times(year: int, gp_name: str):
         sess = load_session(year, gp_name, "Q")
         results = sess.results
         
+        # Check if session loaded but has no data (hasn't occurred yet)
+        if results is None or len(results) == 0:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Qualifying data for '{gp_name}' {year} is not available yet. The qualifying session may not have occurred."
+            )
+        
         # Extract driver and best qualifying time
         qual_data = []
         for _, row in results.iterrows():
@@ -118,17 +125,38 @@ def get_qualifying_times(year: int, gp_name: str):
                     "QualifyingTime (s)": best_time.total_seconds()
                 })
         
+        # Check if we got any valid qualifying times
+        if len(qual_data) == 0:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No valid qualifying times found for '{gp_name}' {year}. The qualifying session may not have occurred yet."
+            )
+        
         df = pd.DataFrame(qual_data)
         df = df.sort_values("QualifyingTime (s)").reset_index(drop=True)
         df["QualifyingPosition"] = df.index + 1
         
         return df
     
+    except HTTPException:
+        # Re-raise HTTPExceptions as-is
+        raise
     except Exception as e:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Could not fetch qualifying data for {year} {gp_name}: {str(e)}"
-        )
+        # Check error message to distinguish between invalid race name and missing data
+        error_msg = str(e).lower()
+        
+        # FastF1 raises errors with these patterns when race doesn't exist
+        if "cannot find" in error_msg or "no round" in error_msg or "invalid event" in error_msg or "not found" in error_msg or "no session" in error_msg:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Circuit or race '{gp_name}' does not exist in {year}. Please check the race name is correct."
+            )
+        else:
+            # For other errors, assume it's a data availability issue
+            raise HTTPException(
+                status_code=404,
+                detail=f"Unable to load qualifying data for '{gp_name}' {year}. The qualifying session may not have occurred yet, or there was an error: {str(e)}"
+            )
 
 def calculate_tire_degradation(year: int, gp_name: str):
     """
@@ -158,11 +186,6 @@ def calculate_tire_degradation(year: int, gp_name: str):
     except:
         return pd.DataFrame(columns=['DriverCode', 'AvgDegPerLap'])
 
-def calculate_deg_from_session(session, is_sprint: bool):
-    """
-    Calculate degradation from a session (practice or sprint)
-    """
-    laps = session.laps.copy()
 def calculate_deg_from_session(session, is_sprint: bool):
     """
     Calculate degradation from a session (practice or sprint)
