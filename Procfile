@@ -1,1 +1,1 @@
-web: gunicorn app.main:app
+web: gunicorn app.api_retrival.apis:app
