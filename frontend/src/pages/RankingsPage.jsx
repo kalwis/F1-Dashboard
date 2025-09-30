@@ -36,6 +36,8 @@ export default function RankingsPage() {
   // Fetch rankings when selectedYear changes
   useEffect(() => {
     const fetchRankings = async () => {
+      if (!selectedYear) return; // Don't fetch if no year is selected
+      
       try {
         setLoading(true);
         

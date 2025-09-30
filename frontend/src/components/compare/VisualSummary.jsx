@@ -74,3 +74,4 @@ export default function VisualSummary({ driverComparison, constructorComparison 
     </div>
   );
 }
+

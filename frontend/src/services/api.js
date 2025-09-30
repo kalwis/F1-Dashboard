@@ -67,6 +67,93 @@ class FastF1ApiService {
     );
   }
 
+  async getPointsHistory() {
+    // Use existing endpoints to build points history
+    const cacheKey = 'pointsHistory_2025';
+    const cached = this.cache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
+      return cached.data;
+    }
+
+    try {
+      // Get 2025 season schedule
+      const scheduleData = await this.getSeasonSchedule('2025');
+      const races = scheduleData.MRData.RaceTable.Races;
+      const today = new Date();
+      
+      // Find completed races only
+      const completedRaces = races.filter(race => new Date(race.date) < today);
+      
+      if (completedRaces.length === 0) {
+        return { year: '2025', pointsHistory: [], totalRaces: 0 };
+      }
+      
+      // Sort by round number
+      completedRaces.sort((a, b) => a.round - b.round);
+      
+      // Initialize points tracking
+      const driverPoints = {};
+      const pointsHistory = [];
+      
+      // Process each completed race
+      for (const race of completedRaces) {
+        try {
+          // Get race results for this round
+          const resultsData = await this.getRaceResults('2025', race.round);
+          const raceResults = resultsData.MRData.RaceTable.Races[0].Results;
+          
+          // Update cumulative points for each driver
+          for (const result of raceResults) {
+            const driverName = `${result.Driver.givenName} ${result.Driver.familyName}`;
+            const pointsEarned = parseFloat(result.points) || 0;
+            
+            if (!driverPoints[driverName]) {
+              driverPoints[driverName] = 0;
+            }
+            driverPoints[driverName] += pointsEarned;
+          }
+          
+          // Store snapshot of current standings
+          const raceData = {
+            round: race.round,
+            raceName: race.raceName,
+            date: race.date,
+            standings: []
+          };
+          
+          // Add current standings for all drivers
+          for (const [driver, totalPoints] of Object.entries(driverPoints)) {
+            raceData.standings.push({
+              driver: driver,
+              points: totalPoints
+            });
+          }
+          
+          // Sort by points (descending)
+          raceData.standings.sort((a, b) => b.points - a.points);
+          pointsHistory.push(raceData);
+          
+        } catch (err) {
+          console.error(`Error processing race ${race.round}:`, err);
+          continue;
+        }
+      }
+      
+      const result = {
+        year: '2025',
+        pointsHistory: pointsHistory,
+        totalRaces: pointsHistory.length
+      };
+      
+      this.cache.set(cacheKey, { data: result, timestamp: Date.now() });
+      return result;
+      
+    } catch (err) {
+      console.error('Error building points history:', err);
+      throw err;
+    }
+  }
+
   getConstructors(year = 'current') {
     return this.fetchWithCache(`constructors_${year}`, () =>
       this.makeRequest('/constructors', { year })

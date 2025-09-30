@@ -4,6 +4,7 @@ import fastf1
 import fastf1.ergast
 import os
 import json
+import pandas as pd
 from datetime import datetime
 
 # Enable cache

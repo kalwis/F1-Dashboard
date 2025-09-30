@@ -1,5 +1,4 @@
 import DashboardCard from '../components/layout/DashboardCard';
-import EloHistoryChart from '../components/charts/EloHistoryChart';
 import PointsHistoryChart from '../components/charts/PointsHistoryChart';
 import UpcomingRaces from '../components/layout/UpcomingRaces';
 import DriverStandings from '../components/standings/DriverStandings';

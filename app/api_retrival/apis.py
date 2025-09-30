@@ -527,4 +527,4 @@ def get_combined_elo_for_race(year, round_num):
 if __name__ == '__main__':
     # The host='0.0.0.0' makes the server accessible on your local network
     # The port can be any available port, 5000 is common for Flask
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)
