@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import DashboardCard from '../components/DashboardCard';
+import DashboardCard from '../components/layout/DashboardCard';
 
 export default function ComparePage() {
   const [drivers, setDrivers] = useState([]);
@@ -19,12 +19,12 @@ export default function ComparePage() {
         setLoading(true);
         
         // Fetch drivers
-        const driverResponse = await fetch('https://f1-dashboard-doj4.onrender.com/api/drivers');
+        const driverResponse = await fetch('http://localhost:5001/api/drivers');
         const driverData = await driverResponse.json();
         setDrivers(driverData.slice(0, 50)); // Top 50 drivers for dropdown
         
         // Fetch constructors (we'll get this from combined rankings)
-        const combinedResponse = await fetch('https://f1-dashboard-doj4.onrender.com/api/rankings/combined');
+        const combinedResponse = await fetch('http://localhost:5001/api/rankings/combined');
         const combinedData = await combinedResponse.json();
         const uniqueConstructors = combinedData.reduce((acc, entry) => {
           if (!acc.find(c => c.constructor_id === entry.constructor_id)) {
@@ -53,7 +53,7 @@ export default function ComparePage() {
     if (!selectedDriver1 || !selectedDriver2) return;
     
     try {
-      const response = await fetch(`https://f1-dashboard-doj4.onrender.com/api/drivers/compare/${selectedDriver1}/${selectedDriver2}`);
+      const response = await fetch(`http://localhost:5001/api/drivers/compare/${selectedDriver1}/${selectedDriver2}`);
       const data = await response.json();
       setDriverComparison(data);
     } catch (err) {
@@ -65,7 +65,7 @@ export default function ComparePage() {
     if (!selectedConstructor1 || !selectedConstructor2) return;
     
     try {
-      const response = await fetch(`https://f1-dashboard-doj4.onrender.com/api/constructors/compare/${selectedConstructor1}/${selectedConstructor2}`);
+      const response = await fetch(`http://localhost:5001/api/constructors/compare/${selectedConstructor1}/${selectedConstructor2}`);
       const data = await response.json();
       setConstructorComparison(data);
     } catch (err) {

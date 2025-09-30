@@ -1,11 +1,12 @@
-import DashboardCard from '../components/DashboardCard';
-import EloHistoryChart from '../components/EloHistoryChart';
-import UpcomingRaces from '../components/UpcomingRaces';
-import DriverStandings from '../components/DriverStandings';
-import ConstructorStandings from '../components/ConstructorStandings';
-import LatestRaceResults from '../components/LatestRaceResults';
-import SyncStatus from '../components/SyncStatus';
-import { FaChartLine, FaCalendarAlt, FaTrophy, FaFlagCheckered } from 'react-icons/fa';
+import DashboardCard from '../components/layout/DashboardCard';
+import EloHistoryChart from '../components/charts/EloHistoryChart';
+import PointsHistoryChart from '../components/charts/PointsHistoryChart';
+import UpcomingRaces from '../components/layout/UpcomingRaces';
+import DriverStandings from '../components/standings/DriverStandings';
+import ConstructorStandings from '../components/standings/ConstructorStandings';
+import LatestRaceResults from '../components/layout/LatestRaceResults';
+import SyncStatus from '../components/layout/SyncStatus';
+import { FaChartLine, FaCalendarAlt, FaTrophy, FaFlagCheckered, FaChartArea } from 'react-icons/fa';
 
 export default function DashboardPage() {
   return (
@@ -13,15 +14,15 @@ export default function DashboardPage() {
       
       {/* Main grid layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-        
-        {/* Elo Rating History - Full width at top */}
+
+        {/* Points History Chart - Full width */}
         <div className="lg:col-span-3">
           <DashboardCard
-            title="Elo Rating History"
-            icon={FaChartLine}
+            title="Points History"
+            icon={FaChartArea}
           >
             <div className="h-80 p-4 bg-black/10 rounded shadow-inner text-white">
-              <EloHistoryChart />
+              <PointsHistoryChart />
             </div>
           </DashboardCard>
         </div>

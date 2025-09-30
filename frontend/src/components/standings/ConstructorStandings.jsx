@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import fastf1Api from '../services/api.js';
+import fastf1Api from '../../services/api.js';
 
 export default function ConstructorStandings() {
   const [constructors, setConstructors] = useState([]);

@@ -4,7 +4,7 @@ import DashboardPage from "./pages/DashboardPage";
 import PredictionsPage from "./pages/PredictionsPage";
 import RankingsPage from "./pages/RankingsPage";
 import ComparePage from "./pages/ComparePage";
-import Navbar from "./components/Navbar";
+import Navbar from "./components/layout/Navbar";
 
 export default function App() {
   return (

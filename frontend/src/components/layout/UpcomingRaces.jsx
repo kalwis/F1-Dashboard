@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import fastf1Api from '../services/api.js';
+import fastf1Api from '../../services/api.js';
 import { FaCalendarAlt, FaFlag, FaClock } from 'react-icons/fa';
 
 export default function UpcomingRaces() {

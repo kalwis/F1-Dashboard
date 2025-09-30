@@ -9,7 +9,7 @@ function join(base, path) {
 
 class FastF1ApiService {
   constructor() {
-    this.baseUrl = 'https://f1-dashboard-doj4.onrender.com//api';
+    this.baseUrl = 'https://f1-dashboard-doj4.onrender.com/api';
     //this.baseUrl = BASE_URL;        // e.g. https://f1-dashboard-doj4.onrender.com/api
     this.cache = new Map();
     this.cacheTimeout = 5 * 60 * 1000;

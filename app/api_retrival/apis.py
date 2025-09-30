@@ -227,9 +227,11 @@ def get_driver_elo_rankings():
             # Get rankings for a specific race
             query = """
                 SELECT
-                    d.driver_id, d.first_name, d.last_name, d.code, dr.elo
+                    d.driver_id, d.first_name, d.last_name, d.code,
+                    c.constructor_id, c.name as constructor_name, dr.elo
                 FROM Driver_Race dr
                 JOIN Driver d ON dr.driver_id = d.driver_id
+                JOIN Constructor c ON dr.constructor_id = c.constructor_id
                 JOIN Race r ON dr.race_id = r.race_id
                 WHERE r.year = ? AND r.round = ?
                 ORDER BY dr.elo DESC;
@@ -239,16 +241,18 @@ def get_driver_elo_rankings():
             # Get rankings for a specific year (latest race of that year)
             query = """
                 SELECT
-                    d.driver_id, d.first_name, d.last_name, d.code, dr.elo
+                    d.driver_id, d.first_name, d.last_name, d.code,
+                    c.constructor_id, c.name as constructor_name, dr.elo
                 FROM
                     Driver d
                 JOIN
                     (SELECT
-                        dr.driver_id, dr.elo,
+                        dr.driver_id, dr.constructor_id, dr.elo,
                         ROW_NUMBER() OVER(PARTITION BY dr.driver_id ORDER BY r.round DESC) as rn
                      FROM Driver_Race dr
                      JOIN Race r ON dr.race_id = r.race_id
                      WHERE r.year = ?) dr ON d.driver_id = dr.driver_id
+                JOIN Constructor c ON dr.constructor_id = c.constructor_id
                 WHERE
                     dr.rn = 1
                 ORDER BY
@@ -259,14 +263,16 @@ def get_driver_elo_rankings():
             # Get latest rankings across all years
             query = """
                 SELECT
-                    d.driver_id, d.first_name, d.last_name, d.code, dr.elo
+                    d.driver_id, d.first_name, d.last_name, d.code,
+                    c.constructor_id, c.name as constructor_name, dr.elo
                 FROM
                     Driver d
                 JOIN
                     (SELECT
-                        driver_id, elo,
+                        driver_id, constructor_id, elo,
                         ROW_NUMBER() OVER(PARTITION BY driver_id ORDER BY race_id DESC) as rn
                      FROM Driver_Race) dr ON d.driver_id = dr.driver_id
+                JOIN Constructor c ON dr.constructor_id = c.constructor_id
                 WHERE
                     dr.rn = 1
                 ORDER BY

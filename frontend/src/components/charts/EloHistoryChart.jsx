@@ -14,8 +14,9 @@ import {
 
 import { createChartOptions } from './EloHistoryChart/chartOptions';
 import { sampleDrivers, sampleData } from './EloHistoryChart/sampleData';
-import { createChartData, fetchEloData } from './EloHistoryChart/utils';
-import DriverSelector from './EloHistoryChart/DriverSelector';
+import { createEloChartData, fetchEloData } from '../shared/chartUtils';
+import { filterDrivers } from '../shared/utils';
+import DriverSelector from '../shared/DriverSelector';
 
 ChartJS.register(
   CategoryScale,
@@ -43,11 +44,11 @@ export default function EloHistoryChart() {
         const data = await fetchEloData();
         // Process real data here
         setDrivers(sampleDrivers);
-        setChartData(createChartData(sampleData, selectedDriver));
+        setChartData(createEloChartData(sampleData, selectedDriver, sampleDrivers));
       } catch (error) {
         // Fallback to sample data
         setDrivers(sampleDrivers);
-        setChartData(createChartData(sampleData, selectedDriver));
+        setChartData(createEloChartData(sampleData, selectedDriver, sampleDrivers));
       } finally {
         setLoading(false);
       }
@@ -57,16 +58,13 @@ export default function EloHistoryChart() {
 
   const handleDriverChange = (driverId) => {
     setSelectedDriver(driverId);
-    setChartData(createChartData(sampleData, driverId));
+    setChartData(createEloChartData(sampleData, driverId, sampleDrivers));
     setShowDriverList(false);
     setSearchTerm('');
   };
 
   // Filter drivers based on search term
-  const filteredDrivers = drivers.filter(driver =>
-    driver.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    driver.team.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDrivers = filterDrivers(drivers, searchTerm);
 
   if (loading) {
     return (
@@ -79,7 +77,7 @@ export default function EloHistoryChart() {
   const options = createChartOptions(selectedDriver);
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col" key={`elo-chart-container-${selectedDriver}`}>
       {/* Driver Selection */}
       <DriverSelector
         selectedDriver={selectedDriver}
@@ -94,7 +92,7 @@ export default function EloHistoryChart() {
 
       {/* Chart */}
       <div className="flex-1 min-h-0 relative">
-        {chartData && <Line options={options} data={chartData} />}
+        {chartData && <Line key={`elo-chart-${selectedDriver}`} options={options} data={chartData} />}
       </div>
 
       {/* Chart Info */}

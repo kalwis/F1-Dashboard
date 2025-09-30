@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FaSync, FaCheckCircle, FaExclamationTriangle, FaClock } from 'react-icons/fa';
-import fastf1Api from '../services/api.js';
+import fastf1Api from '../../services/api.js';
 
 export default function SyncStatus() {
   const [syncStatus, setSyncStatus] = useState({
