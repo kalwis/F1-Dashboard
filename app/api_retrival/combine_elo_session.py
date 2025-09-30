@@ -1,6 +1,7 @@
 import pandas as pd
 import session_retrival as fn1
 import round_elo as fn2
+import fastf1
 
 def merge_player_elo_session(elo_tables, session):
     #elo table will be passed as full thing
