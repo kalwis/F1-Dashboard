@@ -7,7 +7,7 @@ export default function PredictionsPage() {
   const [predictions, setPredictions] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedRace, setSelectedRace] = useState('Monaco');
+  const [selectedRace, setSelectedRace] = useState('');
   const [availableRaces, setAvailableRaces] = useState([]);
   const [checkingRaces, setCheckingRaces] = useState(true);
 
@@ -79,9 +79,9 @@ export default function PredictionsPage() {
     setAvailableRaces(available);
     setCheckingRaces(false);
     
-    // Set the first available race as default
-    if (available.length > 0 && !available.includes(selectedRace)) {
-      setSelectedRace(available[0]);
+    // Set the latest (last) available race as default
+    if (available.length > 0) {
+      setSelectedRace(available[available.length - 1]);
     }
   }, []);
 
