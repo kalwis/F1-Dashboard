@@ -104,14 +104,23 @@ class FastF1ApiService {
   }
 
   // Race Prediction API
+  // Race Prediction API
   async getRacePrediction(year, gpName) {
     return this.fetchWithCache(`racePrediction_${year}_${gpName}`, () => {
       const url = new URL(join(this.predictionBaseUrl, '/api/race_predict'));
       url.searchParams.append('year', year);
       url.searchParams.append('gp_name', gpName);
       
-      return fetch(url.toString()).then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return fetch(url.toString()).then(async res => {
+        if (!res.ok) {
+          const errorData = await res.json();
+          const error = new Error(errorData.detail || `HTTP ${res.status}`);
+          error.response = {
+            status: res.status,
+            data: errorData
+          };
+          throw error;
+        }
         return res.json();
       });
     });
