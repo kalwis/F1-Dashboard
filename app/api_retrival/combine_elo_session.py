@@ -91,7 +91,7 @@ def get_sql_session_elos(year):
     results = pd.DataFrame()
     
     
-    for rnd in range(1, fn1.get_rounds_count(year)+1):
+    for rnd in range(1, 18):
         session = fn1.get_session(year, rnd)
         
         session_merged = merge_session_elos(elo_tables, session)
