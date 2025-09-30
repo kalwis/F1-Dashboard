@@ -197,30 +197,24 @@ def insert_driver_race(
     cur = conn.cursor()
     
     cur.execute("""
-        SELECT driver_race_id 
-        FROM Driver_Race 
-        WHERE driver_id=? AND race_id=?
-    """, (driver_id, race_id))
-
-    existing = cur.fetchone()
-    if existing:
-        return existing[0]  # Return existing ID
-
-    
-    cur.execute("""
         INSERT INTO Driver_Race (
             driver_id, constructor_id, race_id,
             GridPosition, Laps, RaceTime, Status,
             Q1, Q2, Q3, qualifying_position,
-            position, points, elo,combined_elo
+            position, points, elo, combined_elo
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         driver_id, constructor_id, race_id,
-        int(grid_position), int(laps), race_time, status,
-        q1, q2, q3, qualifying_position,
-        position, points, int(elo), int(combined_elo)
+        safe_int(grid_position), safe_int(laps), race_time, status,
+        q1, q2, q3,
+        safe_int(qualifying_position),
+        safe_int(position),
+        safe_int(points),
+        safe_int(elo),
+        safe_int(combined_elo)
     ))
+
     conn.commit()
     return cur.lastrowid
 
@@ -248,6 +242,10 @@ def insert_constructor_race(conn, constructor_id, race_id, elo):
     
     return cur.lastrowid
 
+def safe_int(val):
+    if val is None or pd.isna(val):
+        return None
+    return int(val)
 
 
 def format_quali_time(val):
@@ -327,10 +325,11 @@ def populate_for_season(year):
 if __name__ == "__main__":
     #reset_tables()
     
-    for yr in range(2021, current_year):
+    """for yr in range(2025, current_year+1):
         populate_for_season(yr)
         print(f"Populated data for {yr} season.")
-        time.sleep(20 + random.uniform(0.5, 2.0))  # 30-32s pause
+        time.sleep(20 + random.uniform(0.5, 2.0))  # 30-32s pause"""
 
-    print("\n Database populated for all seasons from 2020 onwards.")
     
+    populate_for_season(2025)
+    print(f"Populated data for {yr} season.")
