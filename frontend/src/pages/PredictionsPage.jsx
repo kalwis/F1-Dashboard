@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import DashboardCard from '../components/DashboardCard';
+import DashboardCard from '../components/layout/DashboardCard';
 
 export default function PredictionsPage() {
   // Available races to demonstrate filtering capability
