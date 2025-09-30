@@ -10,7 +10,6 @@ export default function PredictionsPage() {
   const [selectedRace, setSelectedRace] = useState('');
   const [availableRaces, setAvailableRaces] = useState([]);
   const [checkingRaces, setCheckingRaces] = useState(true);
-  const [raceCalendar, setRaceCalendar] = useState([]);
 
   const getAvailableRaces = (calendar) => {
     const available = [];
@@ -53,7 +52,7 @@ export default function PredictionsPage() {
       else if (raceName.includes('United States')) predictionName = 'United States';
       else if (raceName.includes('Mexico City')) predictionName = 'Mexico';
       else if (raceName.includes('São Paulo')) predictionName = 'Brazil';
-      else if (raceName.includes('Las Vegas')) predictionName = 'United States';
+      else if (raceName.includes('Las Vegas')) predictionName = 'Las Vegas';
       else if (raceName.includes('Qatar')) predictionName = 'Qatar';
       else if (raceName.includes('Abu Dhabi')) predictionName = 'Abu Dhabi';
       
@@ -64,19 +63,23 @@ export default function PredictionsPage() {
       };
     });
     
-    setRaceCalendar(calendar);
     return calendar;
   };
 
   const fetchPredictions = async () => {
-    if (!selectedRace) return;
+    if (!selectedRace) {
+      console.log('No race selected, skipping prediction fetch');
+      return;
+    }
     
     try {
       setLoading(true);
       setError(null);
       
+      console.log('Fetching predictions for:', selectedRace);
       // Use the race prediction API - always 2025
       const data = await apiService.getRacePrediction(2025, selectedRace);
+      console.log('Predictions received:', data);
       setPredictions(data);
     } catch (err) {
       console.error('Error fetching predictions:', err);
@@ -88,14 +91,22 @@ export default function PredictionsPage() {
 
   useEffect(() => {
     const loadRaceCalendar = async () => {
-      const calendar = await fetchRaceCalendar();
-      const available = getAvailableRaces(calendar);
-      setAvailableRaces(available);
-      setCheckingRaces(false);
-      
-      // Set the latest (last) available race as default
-      if (available.length > 0) {
-        setSelectedRace(available[available.length - 1]);
+      try {
+        const calendar = await fetchRaceCalendar();
+        console.log('Race calendar loaded:', calendar);
+        const available = getAvailableRaces(calendar);
+        console.log('Available races:', available);
+        setAvailableRaces(available);
+        setCheckingRaces(false);
+        
+        // Set the first available race as default (most recent with data)
+        if (available.length > 0) {
+          console.log('Setting default race to:', available[0]);
+          setSelectedRace(available[0]);
+        }
+      } catch (err) {
+        console.error('Error loading race calendar:', err);
+        setCheckingRaces(false);
       }
     };
     
@@ -103,7 +114,7 @@ export default function PredictionsPage() {
   }, []);
 
   useEffect(() => {
-    if (availableRaces.length > 0) {
+    if (availableRaces.length > 0 && selectedRace) {
       fetchPredictions();
     }
   }, [selectedRace, availableRaces]);
@@ -168,6 +179,13 @@ export default function PredictionsPage() {
         availableGPs={availableRaces}
         loading={loading}
       />
+
+      {!selectedRace && (
+        <div className="text-center text-white/60 mt-8 p-6 bg-black/10 rounded-lg border border-white/10">
+          <div className="text-lg mb-2">Select a race above to view predictions</div>
+          <div className="text-sm">Choose from the available 2025 races to see tire degradation analysis and race position predictions</div>
+        </div>
+      )}
 
       {predictions && (
         <>
