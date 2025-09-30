@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import YearSelector from '../components/rankings/YearSelector';
 import DriverRankingsCard from '../components/rankings/DriverRankingsCard';
 import CombinedRankingsCard from '../components/rankings/CombinedRankingsCard';
+import SyncStatus from '../components/layout/SyncStatus';
 import { FaCalendarAlt } from 'react-icons/fa';
 
 export default function RankingsPage() {
   const [driverRankings, setDriverRankings] = useState([]);
   const [combinedRankings, setCombinedRankings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
   const [availableYears, setAvailableYears] = useState([]);
@@ -34,14 +35,12 @@ export default function RankingsPage() {
 
   // Fetch rankings when selectedYear changes
   useEffect(() => {
-    if (selectedYear === null) return; // Don't fetch until we have a year selected
-
     const fetchRankings = async () => {
       try {
         setLoading(true);
         
-        // Build URL with year parameter if selected
-        const yearParam = selectedYear ? `?season=${selectedYear}` : '';
+        // Build URL with year parameter
+        const yearParam = `?season=${selectedYear}`;
         
         // Fetch driver Elo rankings
         const driverResponse = await fetch(`http://localhost:5001/api/rankings/drivers/elo${yearParam}`);
@@ -129,6 +128,11 @@ export default function RankingsPage() {
             Rankings can be filtered by season using the year selector above. Additional filtering by race, driver, or constructor is available for deeper exploration. (F7)
           </span>
         </div>
+      </div>
+
+      {/* Footer Sync Info */}
+      <div className="mt-6">
+        <SyncStatus />
       </div>
     </div>
   );

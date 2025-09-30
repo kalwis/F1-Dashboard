@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardCard from '../components/layout/DashboardCard';
 import GPSSelector from '../components/shared/GPSSelector';
+import SyncStatus from '../components/layout/SyncStatus';
 import apiService from '../services/api';
 
 export default function PredictionsPage() {
@@ -397,6 +398,11 @@ export default function PredictionsPage() {
           </div>
         </>
       )}
+
+      {/* Footer Sync Info */}
+      <div className="mt-6">
+        <SyncStatus />
+      </div>
       </div>
     </>
   );

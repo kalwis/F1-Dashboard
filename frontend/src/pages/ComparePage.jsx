@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import FilterModal from '../components/compare/FilterModal';
 import FilterSummary from '../components/compare/FilterSummary';
+import SyncStatus from '../components/layout/SyncStatus';
 
 export default function ComparePage() {
   const [drivers, setDrivers] = useState([]);
@@ -117,6 +118,11 @@ export default function ComparePage() {
         selectedConstructor2={selectedConstructor2}
         setSelectedConstructor2={setSelectedConstructor2}
       />
+
+      {/* Footer Sync Info */}
+      <div className="mt-6">
+        <SyncStatus />
+      </div>
     </div>
   );
 }

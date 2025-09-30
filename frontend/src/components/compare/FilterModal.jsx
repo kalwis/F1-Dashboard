@@ -294,7 +294,7 @@ export default function FilterModal({
                       setDriverSearch1('');
                     }}
                     selectedColor="blue"
-                    showCode={true}
+                    showCode={false}
                     emptyMessage="No drivers found"
                   />
                   
@@ -310,7 +310,7 @@ export default function FilterModal({
                       setDriverSearch2('');
                     }}
                     selectedColor="red"
-                    showCode={true}
+                    showCode={false}
                     emptyMessage="No drivers found"
                   />
                 </div>

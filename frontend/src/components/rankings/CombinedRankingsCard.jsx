@@ -6,7 +6,7 @@ import { FaCar } from 'react-icons/fa';
 export default function CombinedRankingsCard({ combinedRankings, selectedYear }) {
   return (
     <DashboardCard 
-      title={`Combined Driver-Car Elo${selectedYear ? ` (${selectedYear})` : ' (All Time)'}`}
+      title={`Combined Driver-Car Elo (${selectedYear})`}
       icon={FaCar}
     >
       <div className="h-[35rem] p-4 bg-black/10 rounded shadow-inner text-sm text-white overflow-y-auto custom-scrollbar">

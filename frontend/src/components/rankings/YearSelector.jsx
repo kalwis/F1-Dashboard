@@ -17,21 +17,8 @@ export default function YearSelector({
           <span className="text-sm font-medium text-white/80">Select Season:</span>
         </div>
         
-        {/* All Time Option */}
+        {/* Recent Years (Last 10) */}
         <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setSelectedYear(null)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-              selectedYear === null
-                ? 'bg-blue-500 text-white shadow-lg ring-2 ring-blue-400'
-                : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white border border-white/20'
-            }`}
-            disabled={loading}
-          >
-            All Time
-          </button>
-          
-          {/* Recent Years (Last 10) */}
           {availableYears.slice(0, 10).map((year) => (
             <button
               key={year}
@@ -81,12 +68,10 @@ export default function YearSelector({
         </div>
         
         {/* Current Selection Display */}
-        {selectedYear && (
-          <div className="flex items-center gap-2 text-sm text-white/60">
-            <FaTrophy className="text-yellow-400" />
-            <span>Showing rankings for <span className="text-white font-medium">{selectedYear}</span> season</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2 text-sm text-white/60">
+          <FaTrophy className="text-yellow-400" />
+          <span>Showing rankings for <span className="text-white font-medium">{selectedYear}</span> season</span>
+        </div>
       </div>
     </div>
   );
