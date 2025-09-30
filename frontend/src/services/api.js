@@ -9,7 +9,9 @@ function join(base, path) {
 
 class FastF1ApiService {
   constructor() {
+    // Use local prediction API for race predictions, production API for other data
     this.baseUrl = 'https://f1-dashboard-doj4.onrender.com/api';
+    this.predictionBaseUrl = 'http://localhost:8000';
     //this.baseUrl = BASE_URL;        // e.g. https://f1-dashboard-doj4.onrender.com/api
     this.cache = new Map();
     this.cacheTimeout = 5 * 60 * 1000;
@@ -99,6 +101,20 @@ class FastF1ApiService {
 
   async isAvailable() {
     try { await this.healthCheck(); return true; } catch { return false; }
+  }
+
+  // Race Prediction API
+  async getRacePrediction(year, gpName) {
+    return this.fetchWithCache(`racePrediction_${year}_${gpName}`, () => {
+      const url = new URL(join(this.predictionBaseUrl, '/api/race_predict'));
+      url.searchParams.append('year', year);
+      url.searchParams.append('gp_name', gpName);
+      
+      return fetch(url.toString()).then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      });
+    });
   }
 }
 

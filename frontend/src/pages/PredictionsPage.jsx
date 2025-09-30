@@ -1,151 +1,217 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardCard from '../components/layout/DashboardCard';
+import GPSSelector from '../components/shared/GPSSelector';
+import apiService from '../services/api';
 
 export default function PredictionsPage() {
-  // Available races to demonstrate filtering capability
-  const raceOptions = [
-    { id: 'bahrain', name: 'Bahrain GP' },
-    { id: 'saudi', name: 'Saudi Arabian GP' },
-    { id: 'australia', name: 'Australian GP' },
+  const [predictions, setPredictions] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedRace, setSelectedRace] = useState('Monaco');
+  const [availableRaces, setAvailableRaces] = useState([]);
+  const [checkingRaces, setCheckingRaces] = useState(true);
+
+  // 2025 F1 calendar with race dates
+  const raceCalendar = [
+    { name: 'Bahrain', date: '2025-03-02' },
+    { name: 'Saudi Arabia', date: '2025-03-09' },
+    { name: 'Australia', date: '2025-03-23' },
+    { name: 'Japan', date: '2025-04-06' },
+    { name: 'China', date: '2025-04-20' },
+    { name: 'Miami', date: '2025-05-04' },
+    { name: 'Emilia Romagna', date: '2025-05-18' },
+    { name: 'Monaco', date: '2025-05-25' },
+    { name: 'Canada', date: '2025-06-08' },
+    { name: 'Spain', date: '2025-06-22' },
+    { name: 'Austria', date: '2025-06-29' },
+    { name: 'Great Britain', date: '2025-07-06' },
+    { name: 'Hungary', date: '2025-07-27' },
+    { name: 'Belgium', date: '2025-08-03' },
+    { name: 'Netherlands', date: '2025-08-24' },
+    { name: 'Italy', date: '2025-08-31' },
+    { name: 'Azerbaijan', date: '2025-09-14' },
+    { name: 'Singapore', date: '2025-09-21' },
+    { name: 'United States', date: '2025-10-19' },
+    { name: 'Mexico', date: '2025-10-26' },
+    { name: 'Brazil', date: '2025-11-02' },
+    { name: 'Qatar', date: '2025-11-23' },
+    { name: 'Abu Dhabi', date: '2025-12-07' }
   ];
 
-  // Sample predictions for each race
-  const sampleData = {
-    bahrain: {
-      qualifying: [
-        { position: 1, driver: 'Max Verstappen', probability: '38%' },
-        { position: 2, driver: 'Lando Norris', probability: '22%' },
-        { position: 3, driver: 'Charles Leclerc', probability: '15%' },
-        { position: 4, driver: 'George Russell', probability: '9%' },
-        { position: 5, driver: 'Sergio Perez', probability: '7%' },
-      ],
-      race: [
-        { position: 1, driver: 'Max Verstappen', probability: '35%' },
-        { position: 2, driver: 'Lando Norris', probability: '20%' },
-        { position: 3, driver: 'Charles Leclerc', probability: '12%' },
-        { position: 4, driver: 'George Russell', probability: '10%' },
-        { position: 5, driver: 'Sergio Perez', probability: '6%' },
-      ],
-    },
-    saudi: {
-      qualifying: [
-        { position: 1, driver: 'Max Verstappen', probability: '40%' },
-        { position: 2, driver: 'Charles Leclerc', probability: '18%' },
-        { position: 3, driver: 'Sergio Perez', probability: '17%' },
-        { position: 4, driver: 'Lando Norris', probability: '15%' },
-        { position: 5, driver: 'Lewis Hamilton', probability: '5%' },
-      ],
-      race: [
-        { position: 1, driver: 'Max Verstappen', probability: '37%' },
-        { position: 2, driver: 'Sergio Perez', probability: '22%' },
-        { position: 3, driver: 'Charles Leclerc', probability: '14%' },
-        { position: 4, driver: 'Lando Norris', probability: '12%' },
-        { position: 5, driver: 'Lewis Hamilton', probability: '8%' },
-      ],
-    },
-    australia: {
-      qualifying: [
-        { position: 1, driver: 'Lando Norris', probability: '34%' },
-        { position: 2, driver: 'Max Verstappen', probability: '30%' },
-        { position: 3, driver: 'Charles Leclerc', probability: '16%' },
-        { position: 4, driver: 'Oscar Piastri', probability: '12%' },
-        { position: 5, driver: 'George Russell', probability: '8%' },
-      ],
-      race: [
-        { position: 1, driver: 'Max Verstappen', probability: '33%' },
-        { position: 2, driver: 'Lando Norris', probability: '25%' },
-        { position: 3, driver: 'Oscar Piastri', probability: '15%' },
-        { position: 4, driver: 'Charles Leclerc', probability: '14%' },
-        { position: 5, driver: 'George Russell', probability: '9%' },
-      ],
-    },
+  const getAvailableRaces = () => {
+    const today = new Date();
+    const available = [];
+    
+    // Check races in chronological order
+    for (const race of raceCalendar) {
+      const raceDate = new Date(race.date);
+      // Consider race available if it's within 2 weeks of today (allowing for qualifying data)
+      const twoWeeksAgo = new Date(today.getTime() - (14 * 24 * 60 * 60 * 1000));
+      
+      if (raceDate <= twoWeeksAgo) {
+        available.push(race.name);
+      }
+    }
+    
+    return available;
   };
 
-  const [selectedRace, setSelectedRace] = useState(raceOptions[0].id);
+  const fetchPredictions = async () => {
+    if (!selectedRace) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Use the race prediction API - always 2025
+      const data = await apiService.getRacePrediction(2025, selectedRace);
+      setPredictions(data);
+    } catch (err) {
+      console.error('Error fetching predictions:', err);
+      setError('Failed to load race predictions. Please check if the prediction API server is running on port 8000.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const qualifyingPredictions = sampleData[selectedRace].qualifying;
-  const racePredictions = sampleData[selectedRace].race;
+  useEffect(() => {
+    const available = getAvailableRaces();
+    setAvailableRaces(available);
+    setCheckingRaces(false);
+    
+    // Set the first available race as default
+    if (available.length > 0 && !available.includes(selectedRace)) {
+      setSelectedRace(available[0]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (availableRaces.length > 0) {
+      fetchPredictions();
+    }
+  }, [selectedRace, availableRaces]);
+
+  if (checkingRaces) {
+    return (
+      <div className="p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center md:text-left text-white">
+          Race Predictions
+        </h1>
+        <div className="text-center text-white/60">Loading...</div>
+      </div>
+    );
+  }
+
+  if (availableRaces.length === 0) {
+    return (
+      <div className="p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center md:text-left text-white">
+          Race Predictions
+        </h1>
+        <div className="text-center text-white/60">
+          <div className="mb-4">No 2025 races have occurred yet.</div>
+          <div className="text-sm">Race predictions will be available once qualifying sessions have taken place.</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center md:text-left text-white">
+          Race Predictions
+        </h1>
+        <div className="text-center text-white/60">Loading race predictions...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center md:text-left text-white">
+          Race Predictions
+        </h1>
+        <div className="text-center text-red-400">{error}</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 font-sans text-gray-800 space-y-6">
-      <h1 className="text-2xl md:text-3xl font-bold text-center md:text-left">Predictions</h1>
+    <div className="p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center md:text-left text-white">
+        Race Predictions
+      </h1>
 
-      {/* Race selection and future filters */}
-      <div className="flex flex-col md:flex-row md:items-center gap-4">
-        <select
-          className="border rounded p-2 text-sm"
-          value={selectedRace}
-          onChange={(e) => setSelectedRace(e.target.value)}
-        >
-          {raceOptions.map((race) => (
-            <option key={race.id} value={race.id}>
-              {race.name}
-            </option>
-          ))}
-        </select>
+      {/* GP Selection */}
+      <GPSSelector
+        selectedGP={selectedRace}
+        setSelectedGP={setSelectedRace}
+        availableGPs={availableRaces}
+        loading={loading}
+      />
 
-        {/* Disabled driver/constructor filters to illustrate planned functionality */}
-        <div className="flex gap-4 flex-1">
-          <select className="border rounded p-2 text-sm w-full" disabled>
-            <option>Filter Driver</option>
-          </select>
-          <select className="border rounded p-2 text-sm w-full" disabled>
-            <option>Filter Constructor</option>
-          </select>
-        </div>
-      </div>
+      {predictions && (
+        <>
+          {/* Race Predictions */}
+          <DashboardCard title={`2025 ${selectedRace} GP - Race Predictions`}>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="text-left text-white/80">
+                    <th className="pb-2">Position</th>
+                    <th className="pb-2">Driver</th>
+                    <th className="pb-2">Team</th>
+                    <th className="pb-2">Tire Management</th>
+                    <th className="pb-2">Confidence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {predictions.predictions.map((prediction) => (
+                    <tr key={prediction.position} className="border-t border-white/10">
+                      <td className="py-2 pr-4 text-white font-bold text-lg">{prediction.predicted_race_position}</td>
+                      <td className="py-2 pr-4 text-white font-medium">{prediction.driver}</td>
+                      <td className="py-2 pr-4 text-white/80">{prediction.driver_code}</td>
+                      <td className="py-2 pr-4 text-white/80">
+                        {prediction.tire_deg_rate ? (
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            prediction.tire_deg_rate < 0 ? 'bg-green-500/20 text-green-400' :
+                            prediction.tire_deg_rate < 1 ? 'bg-yellow-500/20 text-yellow-400' :
+                            'bg-red-500/20 text-red-400'
+                          }`}>
+                            {prediction.tire_deg_rate < 0 ? 'Excellent' :
+                             prediction.tire_deg_rate < 1 ? 'Good' : 'Poor'}
+                          </span>
+                        ) : 'N/A'}
+                      </td>
+                      <td className="py-2 text-white/60 text-xs">
+                        {prediction.prediction_method === 'qualifying_and_tire_deg' ? 'High' : 'Medium'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-white/60 mt-2">
+              Race predictions based on qualifying position and tire degradation analysis. 
+              Priority: Sprint Race &gt; FP2 &gt; FP3. Lower tire degradation values indicate better race pace.
+            </p>
+          </DashboardCard>
 
-      <DashboardCard title="Q3 Qualifying Prediction">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="text-left">
-                <th className="pb-2">Pos</th>
-                <th className="pb-2">Driver</th>
-                <th className="pb-2">Probability</th>
-              </tr>
-            </thead>
-            <tbody>
-              {qualifyingPredictions.map((row) => (
-                <tr key={row.position} className="border-t">
-                  <td className="py-1 pr-4">{row.position}</td>
-                  <td className="py-1 pr-4">{row.driver}</td>
-                  <td className="py-1">{row.probability}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="text-xs text-gray-500 mt-2">Automatically generated from practice, Q1 and Q2 data (F2).</p>
-      </DashboardCard>
-
-      <DashboardCard title="Race Outcome Prediction">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="text-left">
-                <th className="pb-2">Pos</th>
-                <th className="pb-2">Driver</th>
-                <th className="pb-2">Probability</th>
-              </tr>
-            </thead>
-            <tbody>
-              {racePredictions.map((row) => (
-                <tr key={row.position} className="border-t">
-                  <td className="py-1 pr-4">{row.position}</td>
-                  <td className="py-1 pr-4">{row.driver}</td>
-                  <td className="py-1">{row.probability}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="text-xs text-gray-500 mt-2">Based on start position and practice race pace (F3).</p>
-      </DashboardCard>
-
-      <div className="text-xs text-gray-500 text-right">
-        Predictions updated daily from official session data (NF2).
-      </div>
+          {/* Methodology Info */}
+          <div className="text-sm text-white/60 mt-6 p-4 bg-black/10 rounded-lg border border-white/10">
+            <div className="space-y-2">
+              <div className="font-semibold text-white">Prediction Methodology:</div>
+              <div>• Uses qualifying results as baseline starting positions</div>
+              <div>• Analyzes tire degradation from practice sessions or sprint races</div>
+              <div>• Adjusts positions based on race pace and tire management</div>
+              <div>• Maximum position change: ±3 positions from qualifying</div>
+              <div>• Data source: FastF1 library with official F1 timing data</div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

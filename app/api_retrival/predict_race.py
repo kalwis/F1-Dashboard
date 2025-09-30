@@ -23,7 +23,7 @@ app.add_middleware(
 )
 
 # ---------------------------------------
-# Hardcoded 2025 F1 grid
+# 2025 F1 grid for race predictions
 # ---------------------------------------
 drivers_2025 = {
     "Max Verstappen": "VER",
@@ -50,6 +50,14 @@ drivers_2025 = {
 
 # Reverse mapping for driver code to full name
 driver_code_to_name = {v: k for k, v in drivers_2025.items()}
+
+# Valid 2025 F1 race names
+valid_races_2025 = [
+    'Bahrain', 'Saudi Arabia', 'Australia', 'Japan', 'China', 'Miami', 
+    'Emilia Romagna', 'Monaco', 'Canada', 'Spain', 'Austria', 'Great Britain',
+    'Hungary', 'Belgium', 'Netherlands', 'Italy', 'Azerbaijan', 'Singapore',
+    'United States', 'Mexico', 'Brazil', 'Qatar', 'Abu Dhabi'
+]
 
 
 # ---------------------------------------
@@ -102,6 +110,7 @@ def get_qualifying_times(year: int, gp_name: str):
             best_time = q3_time if pd.notna(q3_time) else (q2_time if pd.notna(q2_time) else q1_time)
             
             if pd.notna(best_time) and driver_code:
+                # Use 2025 driver mapping for predictions
                 driver_name = driver_code_to_name.get(driver_code, driver_code)
                 qual_data.append({
                     "Driver": driver_name,
@@ -217,6 +226,7 @@ def calculate_deg_from_session(session, is_sprint: bool):
     
     return avg_deg
 
+
 def predict_race_positions(year: int, gp_name: str, qualifying_times: pd.DataFrame):
     """
     Predict race finishing positions based on qualifying + tire degradation
@@ -226,6 +236,7 @@ def predict_race_positions(year: int, gp_name: str, qualifying_times: pd.DataFra
     - Drivers with significantly better tire deg can gain 1-3 positions
     - Drivers with significantly worse tire deg can lose 1-3 positions
     - Maximum movement is ±3 positions from qualifying
+    - Fallback: Use historical performance if no qualifying data
     """
     # Get tire degradation data
     deg_data = calculate_tire_degradation(year, gp_name)
@@ -323,6 +334,7 @@ def predict_race_positions(year: int, gp_name: str, qualifying_times: pd.DataFra
     return predictions
 
 
+
 # ---------------------------------------
 # API Endpoints
 # ---------------------------------------
@@ -352,13 +364,20 @@ def race_predict(year: int, gp_name: str):
     5. Predicts race positions by adjusting qualifying order based on tire management
     """
     try:
+        # Validate race name
+        if gp_name not in valid_races_2025:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid race name '{gp_name}'. Valid 2025 races: {', '.join(valid_races_2025)}"
+            )
+        
         # Fetch qualifying times
         qualifying_times = get_qualifying_times(year, gp_name)
         
         if len(qualifying_times) == 0:
             raise HTTPException(
                 status_code=404,
-                detail=f"No qualifying data found for {year} {gp_name}"
+                detail=f"No qualifying data found for {year} {gp_name}. Please try a different race or check if the race has occurred."
             )
         
         # Generate predictions
