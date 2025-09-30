@@ -212,25 +212,68 @@ def compare_constructors(constructor1_id, constructor2_id):
 
 @app.route('/api/rankings/drivers/elo', methods=['GET'])
 def get_driver_elo_rankings():
-    """Returns the latest Elo score for every driver, ranked highest to lowest."""
+    """
+    Returns the latest Elo score for every driver, ranked highest to lowest.
+    Can be filtered by season using query parameter: ?season=2023
+    Can be filtered by specific race using: ?season=2023&race=5
+    """
     try:
+        year = request.args.get('season', type=int)
+        round_num = request.args.get('race', type=int)
+        
         conn = get_db_connection()
-        query = """
-            SELECT
-                d.driver_id, d.first_name, d.last_name, d.code, dr.elo
-            FROM
-                Driver d
-            JOIN
-                (SELECT
-                    driver_id, elo,
-                    ROW_NUMBER() OVER(PARTITION BY driver_id ORDER BY race_id DESC) as rn
-                 FROM Driver_Race) dr ON d.driver_id = dr.driver_id
-            WHERE
-                dr.rn = 1
-            ORDER BY
-                dr.elo DESC;
-        """
-        drivers = conn.execute(query).fetchall()
+        
+        if year and round_num:
+            # Get rankings for a specific race
+            query = """
+                SELECT
+                    d.driver_id, d.first_name, d.last_name, d.code, dr.elo
+                FROM Driver_Race dr
+                JOIN Driver d ON dr.driver_id = d.driver_id
+                JOIN Race r ON dr.race_id = r.race_id
+                WHERE r.year = ? AND r.round = ?
+                ORDER BY dr.elo DESC;
+            """
+            drivers = conn.execute(query, (year, round_num)).fetchall()
+        elif year:
+            # Get rankings for a specific year (latest race of that year)
+            query = """
+                SELECT
+                    d.driver_id, d.first_name, d.last_name, d.code, dr.elo
+                FROM
+                    Driver d
+                JOIN
+                    (SELECT
+                        dr.driver_id, dr.elo,
+                        ROW_NUMBER() OVER(PARTITION BY dr.driver_id ORDER BY r.round DESC) as rn
+                     FROM Driver_Race dr
+                     JOIN Race r ON dr.race_id = r.race_id
+                     WHERE r.year = ?) dr ON d.driver_id = dr.driver_id
+                WHERE
+                    dr.rn = 1
+                ORDER BY
+                    dr.elo DESC;
+            """
+            drivers = conn.execute(query, (year,)).fetchall()
+        else:
+            # Get latest rankings across all years
+            query = """
+                SELECT
+                    d.driver_id, d.first_name, d.last_name, d.code, dr.elo
+                FROM
+                    Driver d
+                JOIN
+                    (SELECT
+                        driver_id, elo,
+                        ROW_NUMBER() OVER(PARTITION BY driver_id ORDER BY race_id DESC) as rn
+                     FROM Driver_Race) dr ON d.driver_id = dr.driver_id
+                WHERE
+                    dr.rn = 1
+                ORDER BY
+                    dr.elo DESC;
+            """
+            drivers = conn.execute(query).fetchall()
+        
         conn.close()
         
         return jsonify(rows_to_dict_list(drivers))
@@ -279,25 +322,73 @@ def get_driver_elo_history(driver_id):
 
 @app.route('/api/rankings/combined', methods=['GET'])
 def get_combined_elo_rankings():
-    """Returns the latest combined driver-constructor Elo scores, ranked."""
+    """
+    Returns the latest combined driver-constructor Elo scores, ranked.
+    Can be filtered by season using query parameter: ?season=2023
+    Can be filtered by specific race using: ?season=2023&race=5
+    """
     try:
+        year = request.args.get('season', type=int)
+        round_num = request.args.get('race', type=int)
+        
         conn = get_db_connection()
-        query = """
-            SELECT
-                d.driver_id, d.first_name, d.last_name,
-                c.constructor_id, c.name as constructor_name,
-                dr.combined_elo
-            FROM Driver_Race dr
-            JOIN Driver d ON dr.driver_id = d.driver_id
-            JOIN Constructor c ON dr.constructor_id = c.constructor_id
-            JOIN (
-                SELECT driver_id, MAX(race_id) as max_race_id
-                FROM Driver_Race
-                GROUP BY driver_id
-            ) latest ON dr.driver_id = latest.driver_id AND dr.race_id = latest.max_race_id
-            ORDER BY dr.combined_elo DESC;
-        """
-        rankings = conn.execute(query).fetchall()
+        
+        if year and round_num:
+            # Get combined rankings for a specific race
+            query = """
+                SELECT
+                    d.driver_id, d.first_name, d.last_name,
+                    c.constructor_id, c.name as constructor_name,
+                    dr.combined_elo
+                FROM Driver_Race dr
+                JOIN Driver d ON dr.driver_id = d.driver_id
+                JOIN Constructor c ON dr.constructor_id = c.constructor_id
+                JOIN Race r ON dr.race_id = r.race_id
+                WHERE r.year = ? AND r.round = ?
+                ORDER BY dr.combined_elo DESC;
+            """
+            rankings = conn.execute(query, (year, round_num)).fetchall()
+        elif year:
+            # Get combined rankings for a specific year (latest race of that year)
+            query = """
+                SELECT
+                    d.driver_id, d.first_name, d.last_name,
+                    c.constructor_id, c.name as constructor_name,
+                    dr.combined_elo
+                FROM Driver_Race dr
+                JOIN Driver d ON dr.driver_id = d.driver_id
+                JOIN Constructor c ON dr.constructor_id = c.constructor_id
+                JOIN Race r ON dr.race_id = r.race_id
+                JOIN (
+                    SELECT dr.driver_id, MAX(r.round) as max_round
+                    FROM Driver_Race dr
+                    JOIN Race r ON dr.race_id = r.race_id
+                    WHERE r.year = ?
+                    GROUP BY dr.driver_id
+                ) latest ON dr.driver_id = latest.driver_id AND r.round = latest.max_round
+                WHERE r.year = ?
+                ORDER BY dr.combined_elo DESC;
+            """
+            rankings = conn.execute(query, (year, year)).fetchall()
+        else:
+            # Get latest combined rankings across all years
+            query = """
+                SELECT
+                    d.driver_id, d.first_name, d.last_name,
+                    c.constructor_id, c.name as constructor_name,
+                    dr.combined_elo
+                FROM Driver_Race dr
+                JOIN Driver d ON dr.driver_id = d.driver_id
+                JOIN Constructor c ON dr.constructor_id = c.constructor_id
+                JOIN (
+                    SELECT driver_id, MAX(race_id) as max_race_id
+                    FROM Driver_Race
+                    GROUP BY driver_id
+                ) latest ON dr.driver_id = latest.driver_id AND dr.race_id = latest.max_race_id
+                ORDER BY dr.combined_elo DESC;
+            """
+            rankings = conn.execute(query).fetchall()
+        
         conn.close()
         
         return jsonify(rows_to_dict_list(rankings))
@@ -309,25 +400,29 @@ def get_combined_elo_rankings():
 
 
 # ========================================
+# Utility Endpoints
+# ========================================
+
+@app.route('/api/years', methods=['GET'])
+def get_available_years():
+    """Returns all available years in the database."""
+    try:
+        conn = get_db_connection()
+        query = "SELECT DISTINCT year FROM Race ORDER BY year DESC;"
+        years = conn.execute(query).fetchall()
+        conn.close()
+        
+        years_list = [row['year'] for row in years]
+        return jsonify(years_list)
+
+    except sqlite3.Error as e:
+        return jsonify({"error": f"Database error: {e}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 500
+
+# ========================================
 # Specific Race Elo Endpoints
 # ========================================
-# Note: These are functionally duplicates of the ones below, just with a different URL schema.
-
-@app.route('/api/rankings/drivers/elo', methods=['GET'])
-def get_driver_elo_by_race_query():
-    """
-    Returns driver Elo for a specific race via query params.
-    e.g., /api/rankings/drivers/elo?season=2023&race=5
-    """
-    year = request.args.get('season', type=int)
-    round_num = request.args.get('race', type=int)
-    
-    if not year or not round_num:
-        # This will fall through to the get_driver_elo_rankings function if no params are provided.
-        # If you want a specific error, you can add it here.
-        return get_driver_elo_rankings()
-
-    return get_elo_for_drivers_in_race(year, round_num)
 
 @app.route('/api/rankings/constructors/elo', methods=['GET'])
 def get_constructor_elo_by_race_query():
