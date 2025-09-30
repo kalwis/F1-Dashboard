@@ -110,7 +110,20 @@ export default function PredictionsPage() {
       setPredictions(data);
     } catch (err) {
       console.error('Error fetching predictions:', err);
-      setError('Failed to load race predictions. Please check if the prediction API server is running on port 8000.');
+      
+      // Extract the actual error message from the API response
+      let errorMessage = 'Failed to load race predictions. Please check if the prediction API server is running on port 8000.';
+      
+      if (err.response?.data?.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (err.response?.data) {
+        // If the response data is already an object with detail
+        errorMessage = err.response.data.detail || JSON.stringify(err.response.data);
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
       setShowErrorPopup(true);
     } finally {
       setLoading(false);
