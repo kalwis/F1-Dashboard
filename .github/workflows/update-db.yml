@@ -1,0 +1,35 @@
+name: Update F1 Database
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"   # Every Monday 6am UTC (after F1 weekends)
+  workflow_dispatch:       # Manual trigger button in GitHub
+
+jobs:
+  update-db:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install fastf1 pandas
+
+      - name: Run updater
+        run: |
+          python app/api_retrival/update.py
+
+      - name: Commit database changes
+        run: |
+          git config --local user.name "github-actions"
+          git config --local user.email "actions@github.com"
+          git add app/api_retrival/database/f1_data.db
+          git commit -m "Auto-update DB after race" || echo "No changes to commit"
+          git push
