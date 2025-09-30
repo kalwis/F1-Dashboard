@@ -31,80 +31,48 @@ export default function PredictionsPage() {
   };
 
   const fetchRaceCalendar = async () => {
-    try {
-      const response = await apiService.getSeasonSchedule(2025);
-      const races = response.MRData?.RaceTable?.Races || [];
+    const response = await apiService.getSeasonSchedule(2025);
+    const races = response.MRData?.RaceTable?.Races || [];
+    
+    // Map API response to our format and convert race names to match prediction API
+    const calendar = races.map(race => {
+      const raceName = race.raceName;
+      // Convert full race names to the format expected by prediction API
+      let predictionName = raceName;
+      if (raceName.includes('Australian')) predictionName = 'Australia';
+      else if (raceName.includes('Chinese')) predictionName = 'China';
+      else if (raceName.includes('Japanese')) predictionName = 'Japan';
+      else if (raceName.includes('Bahrain')) predictionName = 'Bahrain';
+      else if (raceName.includes('Saudi Arabian')) predictionName = 'Saudi Arabia';
+      else if (raceName.includes('Miami')) predictionName = 'Miami';
+      else if (raceName.includes('Emilia Romagna')) predictionName = 'Emilia Romagna';
+      else if (raceName.includes('Monaco')) predictionName = 'Monaco';
+      else if (raceName.includes('Spanish')) predictionName = 'Spain';
+      else if (raceName.includes('Canadian')) predictionName = 'Canada';
+      else if (raceName.includes('Austrian')) predictionName = 'Austria';
+      else if (raceName.includes('British')) predictionName = 'Great Britain';
+      else if (raceName.includes('Belgian')) predictionName = 'Belgium';
+      else if (raceName.includes('Hungarian')) predictionName = 'Hungary';
+      else if (raceName.includes('Dutch')) predictionName = 'Netherlands';
+      else if (raceName.includes('Italian')) predictionName = 'Italy';
+      else if (raceName.includes('Azerbaijan')) predictionName = 'Azerbaijan';
+      else if (raceName.includes('Singapore')) predictionName = 'Singapore';
+      else if (raceName.includes('United States')) predictionName = 'United States';
+      else if (raceName.includes('Mexico City')) predictionName = 'Mexico';
+      else if (raceName.includes('São Paulo')) predictionName = 'Brazil';
+      else if (raceName.includes('Las Vegas')) predictionName = 'United States';
+      else if (raceName.includes('Qatar')) predictionName = 'Qatar';
+      else if (raceName.includes('Abu Dhabi')) predictionName = 'Abu Dhabi';
       
-      // Map API response to our format and convert race names to match prediction API
-      const calendar = races.map(race => {
-        const raceName = race.raceName;
-        // Convert full race names to the format expected by prediction API
-        let predictionName = raceName;
-        if (raceName.includes('Australian')) predictionName = 'Australia';
-        else if (raceName.includes('Chinese')) predictionName = 'China';
-        else if (raceName.includes('Japanese')) predictionName = 'Japan';
-        else if (raceName.includes('Bahrain')) predictionName = 'Bahrain';
-        else if (raceName.includes('Saudi Arabian')) predictionName = 'Saudi Arabia';
-        else if (raceName.includes('Miami')) predictionName = 'Miami';
-        else if (raceName.includes('Emilia Romagna')) predictionName = 'Emilia Romagna';
-        else if (raceName.includes('Monaco')) predictionName = 'Monaco';
-        else if (raceName.includes('Spanish')) predictionName = 'Spain';
-        else if (raceName.includes('Canadian')) predictionName = 'Canada';
-        else if (raceName.includes('Austrian')) predictionName = 'Austria';
-        else if (raceName.includes('British')) predictionName = 'Great Britain';
-        else if (raceName.includes('Belgian')) predictionName = 'Belgium';
-        else if (raceName.includes('Hungarian')) predictionName = 'Hungary';
-        else if (raceName.includes('Dutch')) predictionName = 'Netherlands';
-        else if (raceName.includes('Italian')) predictionName = 'Italy';
-        else if (raceName.includes('Azerbaijan')) predictionName = 'Azerbaijan';
-        else if (raceName.includes('Singapore')) predictionName = 'Singapore';
-        else if (raceName.includes('United States')) predictionName = 'United States';
-        else if (raceName.includes('Mexico City')) predictionName = 'Mexico';
-        else if (raceName.includes('São Paulo')) predictionName = 'Brazil';
-        else if (raceName.includes('Las Vegas')) predictionName = 'United States';
-        else if (raceName.includes('Qatar')) predictionName = 'Qatar';
-        else if (raceName.includes('Abu Dhabi')) predictionName = 'Abu Dhabi';
-        
-        return {
-          name: predictionName,
-          date: race.date.split(' ')[0], // Extract just the date part
-          raceName: raceName
-        };
-      });
-      
-      setRaceCalendar(calendar);
-      return calendar;
-    } catch (err) {
-      console.error('Error fetching race calendar:', err);
-      // Fallback to hardcoded calendar if API fails
-      const fallbackCalendar = [
-        { name: 'Bahrain', date: '2025-03-02' },
-        { name: 'Saudi Arabia', date: '2025-03-09' },
-        { name: 'Australia', date: '2025-03-23' },
-        { name: 'Japan', date: '2025-04-06' },
-        { name: 'China', date: '2025-04-20' },
-        { name: 'Miami', date: '2025-05-04' },
-        { name: 'Emilia Romagna', date: '2025-05-18' },
-        { name: 'Monaco', date: '2025-05-25' },
-        { name: 'Canada', date: '2025-06-08' },
-        { name: 'Spain', date: '2025-06-22' },
-        { name: 'Austria', date: '2025-06-29' },
-        { name: 'Great Britain', date: '2025-07-06' },
-        { name: 'Hungary', date: '2025-07-27' },
-        { name: 'Belgium', date: '2025-08-03' },
-        { name: 'Netherlands', date: '2025-08-24' },
-        { name: 'Italy', date: '2025-08-31' },
-        { name: 'Azerbaijan', date: '2025-09-14' },
-        { name: 'Singapore', date: '2025-09-21' },
-        { name: 'United States', date: '2025-10-19' },
-        { name: 'Mexico', date: '2025-10-26' },
-        { name: 'Brazil', date: '2025-11-02' },
-        { name: 'Qatar', date: '2025-11-23' },
-        { name: 'Abu Dhabi', date: '2025-12-07' }
-      ];
-      setRaceCalendar(fallbackCalendar);
-      return fallbackCalendar;
-    }
+      return {
+        name: predictionName,
+        date: race.date.split(' ')[0], // Extract just the date part
+        raceName: raceName
+      };
+    });
+    
+    setRaceCalendar(calendar);
+    return calendar;
   };
 
   const fetchPredictions = async () => {
