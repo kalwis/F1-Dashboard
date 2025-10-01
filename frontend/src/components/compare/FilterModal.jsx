@@ -20,15 +20,18 @@ export default function FilterModal({
   selectedConstructor1,
   setSelectedConstructor1,
   selectedConstructor2,
-  setSelectedConstructor2
+  setSelectedConstructor2,
+  useDifferentYears,
+  setUseDifferentYears,
+  selectedYear1,
+  setSelectedYear1,
+  selectedYear2,
+  setSelectedYear2
 }) {
   const [driverSearch1, setDriverSearch1] = useState('');
   const [driverSearch2, setDriverSearch2] = useState('');
   const [constructorSearch1, setConstructorSearch1] = useState('');
   const [constructorSearch2, setConstructorSearch2] = useState('');
-  const [useDifferentYears, setUseDifferentYears] = useState(false);
-  const [selectedYear1, setSelectedYear1] = useState(selectedYear);
-  const [selectedYear2, setSelectedYear2] = useState(selectedYear);
   const [drivers1, setDrivers1] = useState([]);
   const [drivers2, setDrivers2] = useState([]);
   const [constructors1, setConstructors1] = useState([]);
@@ -185,7 +188,7 @@ export default function FilterModal({
 
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[60vh]">
+        <div className="p-6 overflow-y-auto max-h-[60vh] custom-scrollbar">
           <div className="space-y-8">
             {/* Season & Year Selection */}
             <div>
