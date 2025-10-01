@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import fastf1Api from '../../services/api.js';
+import LeaderboardItem from '../shared/LeaderboardItem';
 
 export default function DriverStandings() {
   const [drivers, setDrivers] = useState([]);
@@ -31,15 +32,6 @@ export default function DriverStandings() {
     return <div className="text-center text-red-500">Backend server not started</div>;
   }
 
-  const getPositionColor = (position) => {
-    switch (position) {
-      case 1: return 'bg-yellow-500 text-black';
-      case 2: return 'bg-gray-400 text-black';
-      case 3: return 'bg-amber-600 text-white';
-      default: return 'bg-white/10 text-white';
-    }
-  };
-
   const getConstructorColor = (constructorName) => {
     const colors = {
       'Red Bull': 'text-red-400 border-red-400',
@@ -56,39 +48,42 @@ export default function DriverStandings() {
     return colors[constructorName] || 'text-white/60 border-white/30';
   };
 
-  return (
-    <div className="h-full space-y-2">
-      {drivers.map((driver, index) => {
-        console.log(`Driver ${index + 1}:`, driver);
-        return (
-          <div key={driver.Driver?.driverId || index} className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-            <div className="flex items-center space-x-3">
-              {/* Position Badge */}
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${getPositionColor(index + 1)}`}>
-                {index + 1}
-              </div>
-              
-              {/* Driver Info */}
-              <div className="flex-1">
-                <div className="font-semibold text-white">
-                  {driver.Driver?.givenName || 'Unknown'} {driver.Driver?.familyName || 'Driver'}
-                </div>
-                <div className={`text-xs font-medium px-2 py-1 rounded-full border inline-block mt-1 ${getConstructorColor(driver.Constructor?.name)}`}>
-                  {driver.Constructor?.name || 'Unknown Team'}
-                </div>
-              </div>
-            </div>
-            
-            {/* Points */}
-            <div className="text-right">
-              <div className="font-bold text-white text-lg">
-                {driver.points || 0}
-              </div>
-              <div className="text-xs text-white/60">pts</div>
-            </div>
+  const renderDriver = (driver, index) => {
+    const position = index + 1;
+    const isPodium = position <= 3;
+
+    return (
+      <LeaderboardItem
+        key={driver.Driver?.driverId || index}
+        position={position}
+        isPodium={isPodium}
+        name={`${driver.Driver?.givenName || 'Unknown'} ${driver.Driver?.familyName || 'Driver'}`}
+        score={driver.points || 0}
+        scoreLabel="pts"
+        extraInfo={
+          <div className={`text-xs font-medium px-2 py-1 rounded-full border inline-block ${getConstructorColor(driver.Constructor?.name)}`}>
+            {driver.Constructor?.name || 'Unknown Team'}
           </div>
-        );
-      })}
+        }
+      />
+    );
+  };
+
+  return (
+    <div className="h-full">
+      {/* Top 3 Highlight */}
+      <div className="space-y-2 mb-4 p-3 bg-gradient-to-br from-yellow-500/5 to-orange-500/5 rounded-xl border border-yellow-500/20">
+        <div className="text-yellow-400 font-semibold text-xs uppercase tracking-wider mb-2">Podium Positions</div>
+        {drivers.slice(0, 3).map((driver, index) => renderDriver(driver, index))}
+      </div>
+
+      {/* Rest of Drivers */}
+      {drivers.length > 3 && (
+        <div className="space-y-2">
+          <div className="text-white/60 font-semibold text-xs uppercase tracking-wider mb-2 px-1">Other Drivers</div>
+          {drivers.slice(3).map((driver, index) => renderDriver(driver, index + 3))}
+        </div>
+      )}
     </div>
   );
 }

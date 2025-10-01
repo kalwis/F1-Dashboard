@@ -1,5 +1,4 @@
 import React from 'react';
-import { FaCalendarAlt, FaTrophy } from 'react-icons/fa';
 
 export default function YearSelector({ 
   selectedYear, 
@@ -13,7 +12,7 @@ export default function YearSelector({
     <div className="mb-6">
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
-          <FaCalendarAlt className="text-white/60" />
+          <span className="text-xl">📅</span>
           <span className="text-sm font-medium text-white/80">Select Season:</span>
         </div>
         
@@ -65,12 +64,6 @@ export default function YearSelector({
               )}
             </>
           )}
-        </div>
-        
-        {/* Current Selection Display */}
-        <div className="flex items-center gap-2 text-sm text-white/60">
-          <FaTrophy className="text-yellow-400" />
-          <span>Showing rankings for <span className="text-white font-medium">{selectedYear}</span> season</span>
         </div>
       </div>
     </div>

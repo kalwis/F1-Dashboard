@@ -17,27 +17,37 @@ export default function PredictionsPage() {
 
   // Team mapping for 2025 F1 grid
   const teamMapping = {
+    // Red Bull Racing
     'VER': 'Red Bull Racing',
+    'TSU': 'Red Bull Racing',
+    // Ferrari
     'LEC': 'Ferrari',
-    'SAI': 'Ferrari',
-    'HAM': 'Mercedes',
+    'HAM': 'Ferrari', 
+    // Mercedes
     'RUS': 'Mercedes',
+    'ANT': 'Mercedes', 
+    // McLaren
     'NOR': 'McLaren',
     'PIA': 'McLaren',
+    // Aston Martin
     'ALO': 'Aston Martin',
     'STR': 'Aston Martin',
-    'OCO': 'Alpine',
+    // Alpine
     'GAS': 'Alpine',
-    'TSU': 'RB',
+    'COL': 'Alpine', 
+    // Williams
     'ALB': 'Williams',
-    'HUL': 'Sauber',
-    'ANT': 'Mercedes',
-    'BEA': 'Ferrari',
-    'COL': 'Williams',
-    'BOR': 'RB',
-    'HAD': 'Alpine',
-    'LAW': 'Red Bull Racing'
-  };
+    'SAI': 'Williams',
+    // RB 
+    'LAW': 'RB',
+    'HAD': 'RB', 
+    // Haas
+    'OCO': 'Haas', 
+    'BEA': 'Haas',
+    // Kick Sauber 
+    'HUL': 'Kick Sauber', 
+    'BOR': 'Kick Sauber' 
+};
 
   const getAvailableRaces = (calendar) => {
     const available = [];
@@ -272,6 +282,110 @@ export default function PredictionsPage() {
           />
         </div>
 
+        {/* Prediction Summary - Shown at top when predictions available */}
+        {predictions && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {/* Predicted Winner */}
+            <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/10 p-4 rounded-xl border border-yellow-500/20">
+              <div className="text-yellow-300 text-xs font-medium mb-1 flex items-center gap-1">
+                <span>🥇</span>
+                <span>Predicted Winner</span>
+              </div>
+              <div className="text-white text-base font-bold truncate">
+                {predictions.predictions.find(p => p.predicted_race_position === 1)?.driver || 'N/A'}
+              </div>
+              <div className="text-yellow-300/60 text-xs mt-1">
+                Qual P{predictions.predictions.find(p => p.predicted_race_position === 1)?.qualifying_position || '-'}
+              </div>
+            </div>
+
+            {/* Fastest Qualifier */}
+            <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 p-4 rounded-xl border border-blue-500/20">
+              <div className="text-blue-300 text-xs font-medium mb-1 flex items-center gap-1">
+                <span>⚡</span>
+                <span>Fastest Qualifier</span>
+              </div>
+              <div className="text-white text-base font-bold truncate">
+                {(() => {
+                  const fastest = predictions.predictions.reduce((min, p) => 
+                    p.qualifying_time < min.qualifying_time ? p : min
+                  );
+                  return fastest.driver;
+                })()}
+              </div>
+              <div className="text-blue-300/60 text-xs mt-1">
+                {(() => {
+                  const fastest = predictions.predictions.reduce((min, p) => 
+                    p.qualifying_time < min.qualifying_time ? p : min
+                  );
+                  return `${fastest.qualifying_time.toFixed(3)}s`;
+                })()}
+              </div>
+            </div>
+
+            {/* Biggest Mover */}
+            <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 p-4 rounded-xl border border-green-500/20">
+              <div className="text-green-300 text-xs font-medium mb-1 flex items-center gap-1">
+                <span>📈</span>
+                <span>Biggest Mover</span>
+              </div>
+              <div className="text-white text-base font-bold truncate">
+                {(() => {
+                  const mover = predictions.predictions.reduce((max, p) => {
+                    const change = p.qualifying_position - p.predicted_race_position;
+                    const maxChange = max.qualifying_position - max.predicted_race_position;
+                    return change > maxChange ? p : max;
+                  });
+                  return mover.driver;
+                })()}
+              </div>
+              <div className="text-green-300/60 text-xs mt-1">
+                {(() => {
+                  const mover = predictions.predictions.reduce((max, p) => {
+                    const change = p.qualifying_position - p.predicted_race_position;
+                    const maxChange = max.qualifying_position - max.predicted_race_position;
+                    return change > maxChange ? p : max;
+                  });
+                  const change = mover.qualifying_position - mover.predicted_race_position;
+                  return change > 0 ? `↑${change} places` : 'No change';
+                })()}
+              </div>
+            </div>
+
+            {/* Best Tire Management */}
+            <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 p-4 rounded-xl border border-purple-500/20">
+              <div className="text-purple-300 text-xs font-medium mb-1 flex items-center gap-1">
+                <span>🏎️</span>
+                <span>Best Tire Mgmt</span>
+              </div>
+              <div className="text-white text-base font-bold truncate">
+                {(() => {
+                  const withTireData = predictions.predictions.filter(p => 
+                    p.tire_deg_rate !== null && p.tire_deg_rate !== undefined
+                  );
+                  if (withTireData.length === 0) return 'No data';
+                  const best = withTireData.reduce((min, p) => 
+                    p.tire_deg_rate < min.tire_deg_rate ? p : min
+                  );
+                  return best.driver;
+                })()}
+              </div>
+              <div className="text-purple-300/60 text-xs mt-1">
+                {(() => {
+                  const withTireData = predictions.predictions.filter(p => 
+                    p.tire_deg_rate !== null && p.tire_deg_rate !== undefined
+                  );
+                  if (withTireData.length === 0) return 'N/A';
+                  const best = withTireData.reduce((min, p) => 
+                    p.tire_deg_rate < min.tire_deg_rate ? p : min
+                  );
+                  return `${best.tire_deg_rate.toFixed(3)}s/lap`;
+                })()}
+              </div>
+            </div>
+          </div>
+        )}
+
         {!selectedRace && (
           <div className="text-center text-white/60 mt-8 p-8 bg-gradient-to-r from-black/20 to-black/10 rounded-xl border border-white/10 backdrop-blur-sm">
             <div className="text-xl mb-3 font-medium">Select a race above to view predictions</div>
@@ -280,10 +394,10 @@ export default function PredictionsPage() {
         )}
 
       {predictions && (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Race Predictions */}
-          <DashboardCard title={`🏁 2025 ${selectedRace} GP - Race Predictions`}>
-            <div className="overflow-x-auto max-h-[32rem] overflow-y-auto">
+          <DashboardCard title={`2025 ${selectedRace} GP - Race Predictions`}>
+            <div className="overflow-x-auto max-h-[32rem] overflow-y-auto custom-scrollbar">
               <table className="min-w-full text-sm">
                 <thead>
                   <tr className="text-left text-white/80 border-b border-white/10">
@@ -372,96 +486,32 @@ export default function PredictionsPage() {
             </p>
           </DashboardCard>
 
-          {/* Prediction Summary */}
-          <DashboardCard title="📊 Prediction Summary">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 p-6 rounded-xl border border-blue-500/20">
-                <div className="text-blue-300 text-sm font-medium mb-2">Total Drivers</div>
-                <div className="text-white text-3xl font-bold">{predictions.predictions.length}</div>
-              </div>
-              <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 p-6 rounded-xl border border-green-500/20">
-                <div className="text-green-300 text-sm font-medium mb-2">With Tire Analysis</div>
-                <div className="text-white text-3xl font-bold">
-                  {predictions.predictions.filter(p => p.tire_deg_rate !== null && p.tire_deg_rate !== undefined).length}
-                </div>
-              </div>
-              <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 p-6 rounded-xl border border-orange-500/20">
-                <div className="text-orange-300 text-sm font-medium mb-2">Qualifying Only</div>
-                <div className="text-white text-3xl font-bold">
-                  {predictions.predictions.filter(p => p.tire_deg_rate === null || p.tire_deg_rate === undefined).length}
-                </div>
-              </div>
-              <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 p-6 rounded-xl border border-purple-500/20">
-                <div className="text-purple-300 text-sm font-medium mb-2">Avg Position Change</div>
-                <div className="text-white text-3xl font-bold">
-                  {(() => {
-                    const changes = predictions.predictions.map(p => p.predicted_race_position - p.qualifying_position);
-                    const avgChange = changes.reduce((sum, change) => sum + change, 0) / changes.length;
-                    return avgChange > 0 ? `+${avgChange.toFixed(1)}` : avgChange.toFixed(1);
-                  })()}
-                </div>
-              </div>
-            </div>
-            <div className="mt-6 p-4 bg-gradient-to-r from-black/20 to-black/10 rounded-xl border border-white/10">
-              <div className="font-semibold text-white mb-3">Position Changes:</div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {(() => {
-                  const changes = predictions.predictions.map(p => p.predicted_race_position - p.qualifying_position);
-                  const gained = changes.filter(c => c < 0).length;
-                  const lost = changes.filter(c => c > 0).length;
-                  const same = changes.filter(c => c === 0).length;
-                  
-                  return (
-                    <>
-                      <div className="text-center">
-                        <div className="text-green-400 text-lg font-bold">↑ {gained}</div>
-                        <div className="text-green-300 text-xs">gained</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-red-400 text-lg font-bold">↓ {lost}</div>
-                        <div className="text-red-300 text-xs">lost</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-white/60 text-lg font-bold">= {same}</div>
-                        <div className="text-white/40 text-xs">same</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-white/60 text-lg font-bold">±3</div>
-                        <div className="text-white/40 text-xs">max change</div>
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            </div>
-          </DashboardCard>
-
           {/* Methodology Info */}
-          <div className="text-sm text-white/60 p-6 bg-gradient-to-r from-black/20 to-black/10 rounded-xl border border-white/10">
-            <div className="space-y-3">
-              <div className="font-semibold text-white text-lg mb-4">🤖 Machine Learning Methodology:</div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
+          <div className="text-xs text-white/60 p-4 bg-gradient-to-r from-black/20 to-black/10 rounded-xl border border-white/10">
+            <div className="space-y-2">
+              <div className="font-semibold text-white text-sm mb-3">🤖 Machine Learning Methodology:</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
                   <div className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-1">•</span>
+                    <span className="text-blue-400 mt-0.5">•</span>
                     <span>Uses qualifying results as baseline starting positions</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-1">•</span>
+                    <span className="text-blue-400 mt-0.5">•</span>
                     <span>Analyzes tire degradation from practice sessions or sprint races</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-1">•</span>
+                    <span className="text-blue-400 mt-0.5">•</span>
                     <span>Machine learning model adjusts positions based on race pace patterns</span>
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-1">•</span>
+                    <span className="text-blue-400 mt-0.5">•</span>
                     <span>Maximum position change: ±3 positions from qualifying</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-1">•</span>
+                    <span className="text-blue-400 mt-0.5">•</span>
                     <span>Data source: FastF1 library with official F1 timing data</span>
                   </div>
                 </div>
@@ -472,7 +522,7 @@ export default function PredictionsPage() {
       )}
 
       {/* Footer Sync Info */}
-      <div className="mt-12">
+      <div className="mt-6">
         <SyncStatus />
       </div>
       </div>

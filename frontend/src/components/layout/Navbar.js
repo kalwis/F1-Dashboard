@@ -17,7 +17,6 @@ export default function Navbar() {
     <div className="flex justify-center w-full p-4">
       <nav className="bg-black/20 backdrop-blur-md border border-white/10 rounded-full px-6 py-3 shadow-xl">
         <div className="flex items-center space-x-8">
-          {/* Logo/Brand */}
           <Link to="/" className="flex items-center space-x-2 group">
             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
               <span className="text-black font-bold text-lg">F1</span>

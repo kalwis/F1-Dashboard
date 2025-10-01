@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import fastf1Api from '../../services/api.js';
+import LeaderboardItem from '../shared/LeaderboardItem';
 
 export default function ConstructorStandings() {
   const [constructors, setConstructors] = useState([]);
@@ -32,47 +33,37 @@ export default function ConstructorStandings() {
     return <div className="text-center text-red-500">Backend server not started</div>;
   }
 
-  const getPositionColor = (position) => {
-    switch (position) {
-      case 1: return 'bg-yellow-500 text-black';
-      case 2: return 'bg-gray-400 text-black';
-      case 3: return 'bg-amber-600 text-white';
-      default: return 'bg-white/10 text-white';
-    }
+  const renderConstructor = (constructor, index) => {
+    const position = index + 1;
+    const isPodium = position <= 3;
+
+    return (
+      <LeaderboardItem
+        key={constructor.Constructor?.constructorId || index}
+        position={position}
+        isPodium={isPodium}
+        name={constructor.Constructor?.name || 'Unknown Team'}
+        score={constructor.points || 0}
+        scoreLabel="pts"
+      />
+    );
   };
 
-
-
   return (
-    <div className="space-y-2">
-      {constructors.map((constructor, index) => (
-        <div 
-          key={constructor.Constructor?.constructorId || index} 
-          className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
-        >
-          <div className="flex items-center space-x-3">
-            {/* Position Badge */}
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${getPositionColor(index + 1)}`}>
-              {index + 1}
-            </div>
-            
-            {/* Constructor Info */}
-            <div className="flex-1">
-              <div className="font-semibold text-white">
-                {constructor.Constructor?.name || 'Unknown Team'}
-              </div>
-            </div>
-          </div>
-          
-          {/* Points */}
-          <div className="text-right">
-            <div className="font-bold text-white text-lg">
-              {constructor.points || 0}
-            </div>
-            <div className="text-xs text-white/60">pts</div>
-          </div>
+    <div className="h-full">
+      {/* Top 3 Highlight */}
+      <div className="space-y-2 mb-4 p-3 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-xl border border-blue-500/20">
+        <div className="text-blue-400 font-semibold text-xs uppercase tracking-wider mb-2">Podium Positions</div>
+        {constructors.slice(0, 3).map((constructor, index) => renderConstructor(constructor, index))}
+      </div>
+
+      {/* Rest of Constructors */}
+      {constructors.length > 3 && (
+        <div className="space-y-2">
+          <div className="text-white/60 font-semibold text-xs uppercase tracking-wider mb-2 px-1">Other Teams</div>
+          {constructors.slice(3).map((constructor, index) => renderConstructor(constructor, index + 3))}
         </div>
-      ))}
+      )}
     </div>
   );
 }
