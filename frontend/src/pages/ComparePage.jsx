@@ -63,12 +63,17 @@ export default function ComparePage() {
     setSelectedDriver2('');
     setSelectedConstructor1('');
     setSelectedConstructor2('');
-  }, [selectedYear]);
+    // Sync year1 and year2 with selectedYear when not using different years
+    if (!useDifferentYears) {
+      setSelectedYear1(selectedYear);
+      setSelectedYear2(selectedYear);
+    }
+  }, [selectedYear, useDifferentYears]);
 
 
   if (loading) {
     return (
-      <div className="pt-20 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+      <div className="pt-28 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
             Compare Performance
@@ -84,7 +89,7 @@ export default function ComparePage() {
 
   if (error) {
     return (
-      <div className="pt-20 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+      <div className="pt-28 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
             Compare Performance
@@ -105,7 +110,7 @@ export default function ComparePage() {
                       (comparisonType === 'constructor-vs-constructor' && selectedConstructor1 && selectedConstructor2);
 
   return (
-    <div className="pt-20 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+    <div className="pt-28 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
       {/* Hero Section */}
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
@@ -114,6 +119,16 @@ export default function ComparePage() {
         <p className="text-lg text-white/70 max-w-4xl mx-auto">
           Head-to-head analysis of drivers and constructors using Elo ratings and performance metrics
         </p>
+      </div>
+
+      {/* Configure Button - Always visible */}
+      <div className="flex justify-center mb-8">
+        <button
+          onClick={() => setIsFilterModalOpen(true)}
+          className="group relative px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-2xl transform hover:scale-105 font-semibold"
+        >
+          {hasSelections ? '⚙️ Change Comparison' : 'Select competitors to compare'}
+        </button>
       </div>
 
       {/* Information Cards - When no selection */}
@@ -163,12 +178,22 @@ export default function ComparePage() {
       )}
 
       {/* Elo Comparison Graph - Empty Container for Future Implementation */}
-      {hasSelections && <ComparisonGraphPlaceholder />}
+      {hasSelections && (
+        <ComparisonGraphPlaceholder
+          comparisonType={comparisonType}
+          selectedDriver1={selectedDriver1}
+          selectedDriver2={selectedDriver2}
+          selectedConstructor1={selectedConstructor1}
+          selectedConstructor2={selectedConstructor2}
+          selectedYear1={selectedYear1}
+          selectedYear2={selectedYear2}
+          drivers={drivers}
+          constructors={constructors}
+        />
+      )}
 
       {/* Empty State - When no selections made */}
-      {!hasSelections && (
-        <ComparisonEmptyState onConfigure={() => setIsFilterModalOpen(true)} />
-      )}
+      {!hasSelections && <ComparisonEmptyState />}
 
       {/* Footer Sync Info */}
       <div className="mt-6">

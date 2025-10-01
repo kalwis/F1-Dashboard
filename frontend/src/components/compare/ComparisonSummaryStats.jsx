@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function ComparisonSummaryStats({
   comparisonType,
@@ -13,6 +13,41 @@ export default function ComparisonSummaryStats({
   selectedYear1,
   selectedYear2
 }) {
+  const [comparisonData, setComparisonData] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchComparisonData = async () => {
+      if (comparisonType === 'driver-vs-driver' && selectedDriver1 && selectedDriver2) {
+        try {
+          setLoading(true);
+          const response = await fetch(`http://localhost:5001/api/drivers/compare/${selectedDriver1}/${selectedDriver2}`);
+          const data = await response.json();
+          setComparisonData(data);
+        } catch (error) {
+          console.error('Error fetching driver comparison:', error);
+          setComparisonData(null);
+        } finally {
+          setLoading(false);
+        }
+      } else if (comparisonType === 'constructor-vs-constructor' && selectedConstructor1 && selectedConstructor2) {
+        try {
+          setLoading(true);
+          const response = await fetch(`http://localhost:5001/api/constructors/compare/${selectedConstructor1}/${selectedConstructor2}`);
+          const data = await response.json();
+          setComparisonData(data);
+        } catch (error) {
+          console.error('Error fetching constructor comparison:', error);
+          setComparisonData(null);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchComparisonData();
+  }, [comparisonType, selectedDriver1, selectedDriver2, selectedConstructor1, selectedConstructor2]);
+
   const getDriverName = (driverId) => {
     const driver = drivers.find(d => d.driver_id === parseInt(driverId));
     return driver ? `${driver.first_name} ${driver.last_name}` : 'N/A';
@@ -21,6 +56,32 @@ export default function ComparisonSummaryStats({
   const getConstructorName = (constructorId) => {
     const constructor = constructors.find(c => c.constructor_id === parseInt(constructorId));
     return constructor?.name || 'N/A';
+  };
+
+  const getElo1 = () => {
+    if (loading) return '...';
+    if (!comparisonData) return '---';
+    return comparisonType === 'driver-vs-driver' 
+      ? Math.round(comparisonData.driver1?.elo || 0)
+      : Math.round(comparisonData.constructor1?.elo || 0);
+  };
+
+  const getElo2 = () => {
+    if (loading) return '...';
+    if (!comparisonData) return '---';
+    return comparisonType === 'driver-vs-driver' 
+      ? Math.round(comparisonData.driver2?.elo || 0)
+      : Math.round(comparisonData.constructor2?.elo || 0);
+  };
+
+  const getEloDifference = () => {
+    if (loading) return '...';
+    if (!comparisonData) return '---';
+    const elo1 = comparisonType === 'driver-vs-driver' ? comparisonData.driver1?.elo : comparisonData.constructor1?.elo;
+    const elo2 = comparisonType === 'driver-vs-driver' ? comparisonData.driver2?.elo : comparisonData.constructor2?.elo;
+    if (!elo1 || !elo2) return '---';
+    const diff = Math.round(elo1 - elo2);
+    return diff > 0 ? `+${diff}` : diff;
   };
 
   return (
@@ -50,7 +111,7 @@ export default function ComparisonSummaryStats({
             : getConstructorName(selectedConstructor1)}
         </div>
         <div className="text-blue-300/60 text-xs mt-1">
-          Elo: ---
+          Elo: {getElo1()}
         </div>
       </div>
 
@@ -66,7 +127,7 @@ export default function ComparisonSummaryStats({
             : getConstructorName(selectedConstructor2)}
         </div>
         <div className="text-purple-300/60 text-xs mt-1">
-          Elo: ---
+          Elo: {getElo2()}
         </div>
       </div>
 
@@ -76,10 +137,12 @@ export default function ComparisonSummaryStats({
           <span>Elo Difference</span>
         </div>
         <div className="text-white text-2xl font-bold">
-          ---
+          {getEloDifference()}
         </div>
         <div className="text-green-300/60 text-xs mt-1">
-          To be calculated
+          {!loading && comparisonData && getEloDifference() !== '---' ? (
+            getEloDifference() > 0 ? 'Competitor 1 ahead' : 'Competitor 2 ahead'
+          ) : 'Loading...'}
         </div>
       </div>
     </div>

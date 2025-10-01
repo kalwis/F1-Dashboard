@@ -68,7 +68,7 @@ export default function RankingsPage() {
 
   if (loading) {
     return (
-      <div className="pt-20 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+      <div className="pt-28 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 bg-clip-text text-transparent">
             Driver & Constructor Rankings
@@ -84,7 +84,7 @@ export default function RankingsPage() {
 
   if (error) {
     return (
-      <div className="pt-20 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+      <div className="pt-28 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 bg-clip-text text-transparent">
             Driver & Constructor Rankings
@@ -102,7 +102,7 @@ export default function RankingsPage() {
   }
 
   return (
-    <div className="pt-20 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+    <div className="pt-28 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
       {/* Hero Section */}
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 bg-clip-text text-transparent">

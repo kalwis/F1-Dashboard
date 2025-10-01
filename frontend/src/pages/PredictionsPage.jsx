@@ -173,7 +173,7 @@ export default function PredictionsPage() {
 
   if (checkingRaces) {
     return (
-      <div className="pt-20 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+      <div className="pt-28 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white bg-gradient-to-r from-blue-400 via-purple-500 to-red-500 bg-clip-text text-transparent">
             Race Predictions
@@ -189,7 +189,7 @@ export default function PredictionsPage() {
 
   if (availableRaces.length === 0) {
     return (
-      <div className="pt-20 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+      <div className="pt-28 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white bg-gradient-to-r from-blue-400 via-purple-500 to-red-500 bg-clip-text text-transparent">
             Race Predictions
@@ -208,7 +208,7 @@ export default function PredictionsPage() {
 
   if (loading) {
     return (
-      <div className="pt-20 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+      <div className="pt-28 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white bg-gradient-to-r from-blue-400 via-purple-500 to-red-500 bg-clip-text text-transparent">
             Race Predictions
@@ -261,7 +261,7 @@ export default function PredictionsPage() {
   return (
     <>
       <ErrorPopup />
-      <div className="pt-20 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+      <div className="pt-28 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white bg-gradient-to-r from-blue-400 via-purple-500 to-red-500 bg-clip-text text-transparent">

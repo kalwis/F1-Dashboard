@@ -8,7 +8,7 @@ import SyncStatus from '../components/layout/SyncStatus';
 
 export default function DashboardPage() {
   return (
-    <div className="p-6 font-sans text-gray-200 max-w-7xl mx-auto">
+    <div className="pt-28 p-6 font-sans text-gray-200 max-w-7xl mx-auto">
 
       {/* Main grid layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
