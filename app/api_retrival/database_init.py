@@ -331,5 +331,5 @@ if __name__ == "__main__":
         time.sleep(20 + random.uniform(0.5, 2.0))  # 30-32s pause"""
 
     
-    populate_for_season(2025)
+    populate_for_season(2022)
     print(f"Populated data for {yr} season.")

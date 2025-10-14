@@ -86,21 +86,35 @@ def merge_session_elos(elo_tables, session):
 def get_sql_session_elos(year):
     elo_tables = fn2.get_season_elos(year)
     results = pd.DataFrame()
-    
-    # Only loop until the last completed race
-    today = pd.Timestamp.now(tz="UTC")
+
+    # Get the full season schedule — no date filtering
     schedule = fastf1.get_event_schedule(year)
-    completed = schedule[schedule["EventDate"] < today]
-    
-    for rnd in completed["RoundNumber"]:
-        session = fn1.get_session(year, int(rnd))
-        if session is None or session.empty:
+    schedule["EventDate"] = pd.to_datetime(schedule["EventDate"]).dt.tz_localize(None)
+
+    for _, event in schedule.iterrows():
+        event_name = event["EventName"].lower()
+        rnd = int(event["RoundNumber"])
+
+        # Skip pre-season testing or any event with 'test' in its name
+        if "test" in event_name:
+            print(f"Skipping testing event: {event['EventName']}")
             continue
-        
+
+        try:
+            session = fn1.get_session(year, rnd)
+        except ValueError as e:
+            print(f"⚠️ Skipping round {rnd} ({event['EventName']}): {e}")
+            continue
+
+        if session is None or session.empty:
+            print(f"⚠️ No session data for round {rnd} ({event['EventName']})")
+            continue
+
         session_merged = merge_session_elos(elo_tables, session)
         results = pd.concat([results, session_merged], ignore_index=True)
 
     return results
+
 
 
 if __name__ == "__main__":
