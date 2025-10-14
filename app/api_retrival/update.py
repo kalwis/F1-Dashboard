@@ -38,20 +38,31 @@ def safe_date(val):
 def update_latest_round(year: int):
     print(f"\n=== Checking latest {year} round ===")
 
-    schedule = getRaces(year)
+    # Try to get the event schedule
+    try:
+        schedule = getRaces(year)
+    except Exception as e:
+        print(f"❌ Could not fetch race schedule for {year}: {e}")
+        print("⏭ Skipping update.")
+        return
+
     now = datetime.now(timezone.utc)
 
-    # Only past rounds, no round 0
-    past_rounds = schedule[
-        (schedule["RoundNumber"] > 0)
-        & (pd.to_datetime(schedule["EventDate"]).dt.tz_localize("UTC") <= now)
-    ]
+    # Only include past races (EventDate <= now)
+    try:
+        past_rounds = schedule[
+            (schedule["RoundNumber"] > 0)
+            & (pd.to_datetime(schedule["EventDate"]).dt.tz_localize("UTC") <= now)
+        ]
+    except Exception as e:
+        print(f"❌ Failed to filter schedule for {year}: {e}")
+        return
 
     if past_rounds.empty:
         print("No past races yet this season.")
         return
 
-    # Pick the latest past round
+    # Pick latest past race
     latest_event = past_rounds.iloc[-1]
     rnd = int(latest_event["RoundNumber"])
     name = latest_event.get("EventName", f"Round {rnd}")
@@ -60,10 +71,11 @@ def update_latest_round(year: int):
 
     print(f"🔎 Latest race: Round {rnd} – {name} ({circuit}, {date_val})")
 
+    # Connect to DB
     conn = sqlite3.connect(DB_FILE)
     cur = conn.cursor()
 
-    # Check Race table
+    # Check if already exists
     cur.execute("SELECT race_id FROM Race WHERE year=? AND round=?", (year, rnd))
     race_row = cur.fetchone()
 
@@ -78,15 +90,30 @@ def update_latest_round(year: int):
             return
         print(f"⚠️ Round {rnd} in DB but missing results → inserting now...")
 
-    # Fetch results
-    results = get_sql_session_elos(year)
-    round_df = results[results["Round"] == rnd] if not results.empty else pd.DataFrame()
-    if round_df.empty:
-        print("✖ No results found in FastF1 yet.")
+    # =====================================
+    # Fetch results (catch FastF1 failures)
+    # =====================================
+    try:
+        results = get_sql_session_elos(year)
+    except ValueError as e:
+        print(f"❌ FastF1 schedule data not available for {year}: {e}")
+        print("⏭ Skipping update until schedule is released.")
+        conn.close()
+        return
+    except Exception as e:
+        print(f"❌ Unexpected error fetching FastF1 session data: {e}")
         conn.close()
         return
 
-    # Ensure Race row exists
+    round_df = results[results["Round"] == rnd] if not results.empty else pd.DataFrame()
+    if round_df.empty:
+        print("✖ No session results found for the latest race.")
+        conn.close()
+        return
+
+    # =====================================
+    # Insert Race entry
+    # =====================================
     cur.execute("""
         INSERT OR IGNORE INTO Race (year, round, name, circuit, date)
         VALUES (?, ?, ?, ?, ?)
@@ -97,7 +124,9 @@ def update_latest_round(year: int):
         "SELECT race_id FROM Race WHERE year=? AND round=?", (year, rnd)
     ).fetchone()[0]
 
-    # Insert results
+    # =====================================
+    # Insert Results
+    # =====================================
     for _, row in round_df.iterrows():
         # Driver
         cur.execute("""
