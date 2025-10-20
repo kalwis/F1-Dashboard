@@ -86,8 +86,8 @@ def calculate_tire_degradation(year, round_num):
 # Run for a given round number
 # -----------------------------
 if __name__ == "__main__":
-    year = 2024
-    round_num = 3  # e.g. Bahrain GP 2024
+    year = 2025
+    round_num = 19  # e.g. Bahrain GP 2024
     deg, source = calculate_tire_degradation(year, round_num)
 
     if source:

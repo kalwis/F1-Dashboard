@@ -8,7 +8,7 @@ from get_deg import calculate_tire_degradation  # import your function
 # CONFIGURATION
 # ==============================
 DB_FILE = "app/api_retrival/database/f1_data.db"
-YEAR = 2024
+YEAR = 2025
 fastf1.Cache.enable_cache("fastf1_cache")
 
 
@@ -34,9 +34,10 @@ def ensure_deg_column():
 # ==============================
 def get_rounds(year):
     schedule = fastf1.get_event_schedule(year)
-    return schedule[schedule["EventFormat"].isin(["conventional", "sprint"])][
-        ["RoundNumber", "EventName", "EventDate"]
-    ].reset_index(drop=True)
+    # skip only pre-season or testing
+    schedule = schedule[~schedule["EventName"].str.contains("Testing", case=False, na=False)]
+    return schedule[["RoundNumber", "EventName", "EventDate"]].reset_index(drop=True)
+
 
 
 # ==============================
