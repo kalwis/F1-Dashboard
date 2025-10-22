@@ -325,6 +325,43 @@ def get_driver_elo_history(driver_id):
         return jsonify({"error": f"An unexpected error occurred: {e}"}), 500
 
 
+@app.route('/api/rankings/constructors/elo/history/<int:constructor_id>', methods=['GET'])
+def get_constructor_elo_history(constructor_id):
+    """
+    Returns the full Elo history for a specific constructor.
+    Can be filtered by season using a query parameter, e.g., ?season=2023
+    """
+    try:
+        year_filter = request.args.get('season', type=int)
+        
+        conn = get_db_connection()
+        
+        base_query = """
+            SELECT
+                r.year, r.round, r.name AS race_name, r.date, cr.elo
+            FROM Constructor_Race cr
+            JOIN Race r ON cr.race_id = r.race_id
+            WHERE cr.constructor_id = ?
+        """
+        params = [constructor_id]
+
+        if year_filter:
+            base_query += " AND r.year = ?"
+            params.append(year_filter)
+        
+        base_query += " ORDER BY r.year, r.round;"
+
+        history = conn.execute(base_query, tuple(params)).fetchall()
+        conn.close()
+        
+        return jsonify(rows_to_dict_list(history))
+
+    except sqlite3.Error as e:
+        return jsonify({"error": f"Database error: {e}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 500
+
+
 @app.route('/api/rankings/combined', methods=['GET'])
 def get_combined_elo_rankings():
     """
