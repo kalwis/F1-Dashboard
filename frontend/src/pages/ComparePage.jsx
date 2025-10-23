@@ -28,12 +28,12 @@ export default function ComparePage() {
         setLoading(true);
         
         // Fetch drivers for selected year using the existing endpoint
-        const driverResponse = await fetch(`http://localhost:5001/api/rankings/drivers/elo?season=${selectedYear}`);
+        const driverResponse = await fetch(`https://f1-dashboard-26fa.onrender.com/api/rankings/drivers/elo?season=${selectedYear}`);
         const driverData = await driverResponse.json();
         setDrivers(driverData.slice(0, 50)); // Top 50 drivers for dropdown
         
         // Fetch constructors from combined rankings
-        const combinedResponse = await fetch(`http://localhost:5001/api/rankings/combined?season=${selectedYear}`);
+        const combinedResponse = await fetch(`hhttps://f1-dashboard-26fa.onrender.com/api/rankings/combined?season=${selectedYear}`);
         const combinedData = await combinedResponse.json();
         const uniqueConstructors = combinedData.reduce((acc, entry) => {
           if (!acc.find(c => c.constructor_id === entry.constructor_id)) {
