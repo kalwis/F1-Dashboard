@@ -4,7 +4,7 @@ from flask_cors import CORS
 import os
 import pandas as pd
 from datetime import datetime
-
+import fastf1
 
 
 app = Flask(__name__)
