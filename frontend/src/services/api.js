@@ -10,8 +10,8 @@ function join(base, path) {
 class FastF1ApiService {
   constructor() {
   // Environment variable (Vite or CRA) or fallback to local
-  const baseFromEnv =
-    import.meta?.env?.VITE_API_URL || process.env.REACT_APP_API_URL;
+  const baseFromEnv = "https://f1-dashboard-26fa.onrender.com"
+    
 
   // Default to localhost for local dev, your Render URL for production
   this.baseUrl = (baseFromEnv || 'http://127.0.0.1:5001') + '/api';
