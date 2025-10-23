@@ -33,7 +33,7 @@ export default function ComparePage() {
         setDrivers(driverData.slice(0, 50)); // Top 50 drivers for dropdown
         
         // Fetch constructors from combined rankings
-        const combinedResponse = await fetch(`hhttps://f1-dashboard-26fa.onrender.com/api/rankings/combined?season=${selectedYear}`);
+        const combinedResponse = await fetch(`https://f1-dashboard-26fa.onrender.com/api/rankings/combined?season=${selectedYear}`);
         const combinedData = await combinedResponse.json();
         const uniqueConstructors = combinedData.reduce((acc, entry) => {
           if (!acc.find(c => c.constructor_id === entry.constructor_id)) {

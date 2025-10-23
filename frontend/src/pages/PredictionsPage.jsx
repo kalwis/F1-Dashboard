@@ -17,7 +17,7 @@ export default function PredictionsPage() {
   // === 🧩 Fetch races that actually have qualifying data in DB ===
   const fetchRaceCalendar = async () => {
     try {
-      const response = await fetch(`http://127.0.0.1:5001/api/available_races/2025`);
+      const response = await fetch(`https://f1-dashboard-26fa.onrender.com/api/available_races/2025`);
       if (!response.ok) throw new Error('Failed to fetch available races');
       const data = await response.json();
 

@@ -17,7 +17,7 @@ export default function RankingsPage() {
   useEffect(() => {
     const fetchAvailableYears = async () => {
       try {
-        const response = await fetch('http://localhost:5001/api/years');
+        const response = await fetch('https://f1-dashboard-26fa.onrender.com/api/years');
         const years = await response.json();
         setAvailableYears(years);
         // Set the latest year as default
@@ -44,12 +44,12 @@ export default function RankingsPage() {
         const yearParam = `?season=${selectedYear}`;
         
         // Fetch driver Elo rankings
-        const driverResponse = await fetch(`http://localhost:5001/api/rankings/drivers/elo${yearParam}`);
+        const driverResponse = await fetch(`https://f1-dashboard-26fa.onrender.com/api/rankings/drivers/elo${yearParam}`);
         const driverData = await driverResponse.json();
         setDriverRankings(driverData.slice(0, 20)); // Top 20 drivers
         
         // Fetch combined rankings
-        const combinedResponse = await fetch(`http://localhost:5001/api/rankings/combined${yearParam}`);
+        const combinedResponse = await fetch(`https://f1-dashboard-26fa.onrender.com/api/rankings/combined${yearParam}`);
         const combinedData = await combinedResponse.json();
         setCombinedRankings(combinedData.slice(0, 20)); // Top 20 combined
         
