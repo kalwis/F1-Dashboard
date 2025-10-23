@@ -9,16 +9,18 @@ function join(base, path) {
 
 class FastF1ApiService {
   constructor() {
-  // Use environment variables when available, fallback to defaults
-  const baseFromEnv = import.meta?.env?.VITE_API_URL || process.env.REACT_APP_API_URL;
-  const predictFromEnv = import.meta?.env?.VITE_PREDICT_API_URL || process.env.REACT_APP_PREDICT_API_URL;
+  // Environment variable (Vite or CRA) or fallback to local
+  const baseFromEnv =
+    import.meta?.env?.VITE_API_URL || process.env.REACT_APP_API_URL;
 
+  // Default to localhost for local dev, your Render URL for production
   this.baseUrl = (baseFromEnv || 'http://127.0.0.1:5001') + '/api';
-  this.predictionBaseUrl = predictFromEnv || 'http://127.0.0.1:5001';
+  this.predictionBaseUrl = this.baseUrl; // same API for predictions
 
   this.cache = new Map();
-  this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
-  }
+  this.cacheTimeout = 5 * 60 * 1000;
+}
+
 
 
   async fetchWithCache(key, fetchFn) {
