@@ -636,6 +636,83 @@ def get_available_races(year):
         return jsonify({"error": f"Failed to load available races: {e}"}), 500
 
 
+@app.route("/api/upcoming_races", methods=["GET"])
+def get_upcoming_races():
+    """
+    Return upcoming races for a given year (defaults to current year) using the local DB.
+    If include_next is true (default), also include next year's races (useful for 2026 when current season ends).
+    """
+    try:
+        year = request.args.get("year", datetime.now().year, type=int)
+        include_next = str(request.args.get("include_next", "1")).lower() in {"1", "true", "yes", "y"}
+        conn = get_db_connection()
+
+        def fetch_year(y):
+            query = """
+                SELECT year, round, name, circuit, date
+                FROM Race
+                WHERE year = ? AND date(date) >= date('now')
+                ORDER BY round ASC;
+            """
+            return pd.read_sql_query(query, conn, params=(y,))
+
+        frames = [fetch_year(year)]
+        if include_next:
+            frames.append(fetch_year(year + 1))
+
+        df = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+        conn.close()
+
+        # Fallback to Ergast if DB has no future races for requested/next year
+        if df.empty:
+            def fetch_ergast(y):
+                try:
+                    sched = ergast.get_race_schedule(y)
+                    sdf = sched.content if hasattr(sched, "content") else sched
+                    if isinstance(sdf, pd.DataFrame) and not sdf.empty:
+                        sdf = sdf.rename(columns={"raceName": "name", "raceDate": "date", "round": "round"})
+                        sdf["year"] = y
+                        return sdf[["year", "round", "name", "date"]]
+                except Exception as e:
+                    print(f"Ergast fallback failed for {y}: {e}")
+                return pd.DataFrame()
+
+            fallback_frames = [fetch_ergast(year)]
+            if include_next:
+                fallback_frames.append(fetch_ergast(year + 1))
+            df = pd.concat(fallback_frames, ignore_index=True) if fallback_frames else pd.DataFrame()
+
+        # Sort by date ascending
+        if not df.empty:
+            df["date_obj"] = pd.to_datetime(df["date"])
+            df = df.sort_values("date_obj")
+
+        races = [
+            {
+                "year": int(row["year"]),
+                "round": int(row["round"]),
+                "raceName": row["name"],
+                "date": pd.to_datetime(row["date"]).date().isoformat(),
+                "Circuit": {
+                    "Location": {
+                        "country": (row.get("circuit") if hasattr(row, "get") else row["circuit"]) if "circuit" in row else "",
+                        "locality": "",
+                    }
+                }
+            }
+            for _, row in df.iterrows()
+        ]
+
+        return jsonify({
+            "requested_year": year,
+            "include_next": include_next,
+            "Races": races
+        })
+    except Exception as e:
+        print(f"Error loading upcoming races: {e}")
+        return jsonify({"error": f"Failed to load upcoming races: {e}"}), 500
+
+
 @app.route("/api/race_predict", methods=["GET"])
 def race_predict_from_db():
     """Generate race predictions using qualifying + tyre degradation data stored in SQLite."""

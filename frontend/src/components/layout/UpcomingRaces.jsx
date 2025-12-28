@@ -8,17 +8,38 @@ export default function UpcomingRaces() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    fastf1Api.getSeasonSchedule()
-      .then((data) => {
-        const all = data.MRData.RaceTable.Races;
-        const today = new Date();
-        const upcoming = all.filter((r) => new Date(r.date) >= today).slice(0, 5);
-        setRaces(upcoming);
-        setLoading(false);
-      })
-      .catch(() => {
-        setLoading(false);
-      });
+    const fetchUpcoming = async () => {
+      const baseApi = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace(/\/+$/, '');
+      const today = new Date();
+
+      // Try DB-backed upcoming races (current year, fallback to next year)
+      try {
+        const res = await fetch(`${baseApi}/upcoming_races?include_next=1`);
+        if (res.ok) {
+          const data = await res.json();
+          const upcoming = (data.Races || []).filter(r => new Date(r.date) >= today).slice(0, 5);
+          if (upcoming.length > 0) {
+            setRaces(upcoming);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (e) {
+        // ignore and fallback
+      }
+
+      // Fallback to Ergast (current season)
+      fastf1Api.getSeasonSchedule()
+        .then((data) => {
+          const all = data.MRData.RaceTable.Races;
+          const upcoming = all.filter((r) => new Date(r.date) >= today).slice(0, 5);
+          setRaces(upcoming);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    };
+
+    fetchUpcoming();
   }, []);
 
   // Update current time every second for countdown
@@ -106,7 +127,7 @@ export default function UpcomingRaces() {
               <div className="flex items-center space-x-2">
                 <FaFlag className={`text-sm ${isNextRace ? 'text-blue-400' : 'text-white/60'}`} />
                 <span className={`font-semibold text-sm ${isNextRace ? 'text-blue-300' : 'text-white'}`}>
-                  {race.Circuit.Location.country} GP
+                  {race.raceName || `${race.Circuit.Location.country || ''} GP`}
                 </span>
               </div>
               <div className="text-right">
