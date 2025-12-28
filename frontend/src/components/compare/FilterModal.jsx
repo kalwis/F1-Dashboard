@@ -3,6 +3,7 @@ import ToggleSwitch from '../shared/ToggleSwitch';
 import SearchableSelector from '../shared/SearchableSelector';
 import YearSelector from '../shared/YearSelector';
 import SectionHeader from '../shared/SectionHeader';
+import fastf1Api from '../../services/api';
 
 export default function FilterModal({ 
   isOpen, 
@@ -44,12 +45,10 @@ export default function FilterModal({
   useEffect(() => {
     const fetchDataForYear1 = async () => {
       try {
-        const driverResponse = await fetch(`http://localhost:5001/api/rankings/drivers/elo?season=${selectedYear1}`);
-        const driverData = await driverResponse.json();
+        const driverData = await fastf1Api.getDriverEloRankings(selectedYear1);
         setDrivers1(driverData.slice(0, 50));
 
-        const combinedResponse = await fetch(`http://localhost:5001/api/rankings/combined?season=${selectedYear1}`);
-        const combinedData = await combinedResponse.json();
+        const combinedData = await fastf1Api.getCombinedRankings(selectedYear1);
         const uniqueConstructors = combinedData.reduce((acc, entry) => {
           if (!acc.find(c => c.constructor_id === entry.constructor_id)) {
             acc.push({
@@ -72,12 +71,10 @@ export default function FilterModal({
   useEffect(() => {
     const fetchDataForYear2 = async () => {
       try {
-        const driverResponse = await fetch(`http://localhost:5001/api/rankings/drivers/elo?season=${selectedYear2}`);
-        const driverData = await driverResponse.json();
+        const driverData = await fastf1Api.getDriverEloRankings(selectedYear2);
         setDrivers2(driverData.slice(0, 50));
 
-        const combinedResponse = await fetch(`http://localhost:5001/api/rankings/combined?season=${selectedYear2}`);
-        const combinedData = await combinedResponse.json();
+        const combinedData = await fastf1Api.getCombinedRankings(selectedYear2);
         const uniqueConstructors = combinedData.reduce((acc, entry) => {
           if (!acc.find(c => c.constructor_id === entry.constructor_id)) {
             acc.push({

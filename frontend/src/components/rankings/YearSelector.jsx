@@ -1,21 +1,21 @@
 import React from 'react';
 
-export default function YearSelector({ 
-  selectedYear, 
-  setSelectedYear, 
-  availableYears, 
-  showAllYears, 
-  setShowAllYears, 
-  loading 
+export default function YearSelector({
+  selectedYear,
+  setSelectedYear,
+  availableYears,
+  showAllYears,
+  setShowAllYears,
+  loading,
 }) {
   return (
     <div className="mb-6">
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-xl">📅</span>
-          <span className="text-sm font-medium text-white/80">Select Season:</span>
+          <span className="text-sm font-semibold text-white/80" aria-hidden="true">Season</span>
+          <span className="text-sm font-medium text-white/80">Select season</span>
         </div>
-        
+
         {/* Recent Years (Last 10) */}
         <div className="flex flex-wrap gap-2">
           {availableYears.slice(0, 10).map((year) => (
@@ -32,7 +32,7 @@ export default function YearSelector({
               {year}
             </button>
           ))}
-          
+
           {/* Show More/Less Toggle */}
           {availableYears.length > 10 && (
             <>
@@ -42,7 +42,7 @@ export default function YearSelector({
               >
                 {showAllYears ? 'Show Less' : `+${availableYears.length - 10} More`}
               </button>
-              
+
               {/* Additional Years */}
               {showAllYears && (
                 <div className="w-full flex flex-wrap gap-2 mt-2">

@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import DashboardCard from '../components/layout/DashboardCard';
 import GPSSelector from '../components/shared/GPSSelector';
 import SyncStatus from '../components/layout/SyncStatus';
+import fastf1Api from '../services/api';
+
+const YEAR = 2025;
 
 export default function PredictionsPage() {
   const navigate = useNavigate();
@@ -14,61 +17,66 @@ export default function PredictionsPage() {
   const [checkingRaces, setCheckingRaces] = useState(true);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
 
-  // === 🧩 Fetch races that actually have qualifying data in DB ===
+  // Fetch races that actually have qualifying data in DB
+  const mapRaceNames = (data) => data.map((raceName) => {
+    const lowerName = raceName.toLowerCase();
+    let predictionName = raceName;
+    if (raceName.includes('Australian')) predictionName = 'Australia';
+    else if (raceName.includes('Chinese')) predictionName = 'China';
+    else if (raceName.includes('Japanese')) predictionName = 'Japan';
+    else if (raceName.includes('Bahrain')) predictionName = 'Bahrain';
+    else if (raceName.includes('Saudi Arabian')) predictionName = 'Saudi Arabia';
+    else if (raceName.includes('Miami')) predictionName = 'Miami';
+    else if (raceName.includes('Emilia Romagna')) predictionName = 'Emilia Romagna';
+    else if (raceName.includes('Monaco')) predictionName = 'Monaco';
+    else if (raceName.includes('Spanish')) predictionName = 'Spain';
+    else if (raceName.includes('Canadian')) predictionName = 'Canada';
+    else if (raceName.includes('Austrian')) predictionName = 'Austria';
+    else if (raceName.includes('British')) predictionName = 'Great Britain';
+    else if (raceName.includes('Belgian')) predictionName = 'Belgium';
+    else if (raceName.includes('Hungarian')) predictionName = 'Hungary';
+    else if (raceName.includes('Dutch')) predictionName = 'Netherlands';
+    else if (raceName.includes('Italian')) predictionName = 'Italy';
+    else if (raceName.includes('Azerbaijan')) predictionName = 'Azerbaijan';
+    else if (raceName.includes('Singapore')) predictionName = 'Singapore';
+    else if (raceName.includes('United States') && !raceName.includes('Miami') && !raceName.includes('Las Vegas')) predictionName = 'United States';
+    else if (raceName.includes('Mexico City')) predictionName = 'Mexico';
+    else if (lowerName.includes('sao paulo') || lowerName.includes('são paulo') || lowerName.trim() === 'brazilian grand prix') predictionName = 'Brazil';
+    else if (raceName.includes('Las Vegas')) predictionName = 'Las Vegas';
+    else if (raceName.includes('Qatar')) predictionName = 'Qatar';
+    else if (raceName.includes('Abu Dhabi')) predictionName = 'Abu Dhabi';
+    return { name: predictionName, raceName };
+  });
+
   const fetchRaceCalendar = async () => {
     try {
-      const response = await fetch(`http://127.0.0.1:5001/api/available_races/2025`);
-      if (!response.ok) throw new Error('Failed to fetch available races');
-      const data = await response.json();
-
-      // Map names to simplified GP format for frontend consistency
-      const calendar = data.map((raceName) => {
-        let predictionName = raceName;
-        if (raceName.includes('Australian')) predictionName = 'Australia';
-        else if (raceName.includes('Chinese')) predictionName = 'China';
-        else if (raceName.includes('Japanese')) predictionName = 'Japan';
-        else if (raceName.includes('Bahrain')) predictionName = 'Bahrain';
-        else if (raceName.includes('Saudi Arabian')) predictionName = 'Saudi Arabia';
-        else if (raceName.includes('Miami')) predictionName = 'Miami';
-        else if (raceName.includes('Emilia Romagna')) predictionName = 'Emilia Romagna';
-        else if (raceName.includes('Monaco')) predictionName = 'Monaco';
-        else if (raceName.includes('Spanish')) predictionName = 'Spain';
-        else if (raceName.includes('Canadian')) predictionName = 'Canada';
-        else if (raceName.includes('Austrian')) predictionName = 'Austria';
-        else if (raceName.includes('British')) predictionName = 'Great Britain';
-        else if (raceName.includes('Belgian')) predictionName = 'Belgium';
-        else if (raceName.includes('Hungarian')) predictionName = 'Hungary';
-        else if (raceName.includes('Dutch')) predictionName = 'Netherlands';
-        else if (raceName.includes('Italian')) predictionName = 'Italy';
-        else if (raceName.includes('Azerbaijan')) predictionName = 'Azerbaijan';
-        else if (raceName.includes('Singapore')) predictionName = 'Singapore';
-        else if (raceName.includes('United States') && !raceName.includes('Miami')) predictionName = 'United States';
-        else if (raceName.includes('Mexico City')) predictionName = 'Mexico';
-        else if (raceName.includes('São Paulo')) predictionName = 'Brazil';
-        else if (raceName.includes('Las Vegas')) predictionName = 'United States';
-        else if (raceName.includes('Qatar')) predictionName = 'Qatar';
-        else if (raceName.includes('Abu Dhabi')) predictionName = 'Abu Dhabi';
-        return { name: predictionName, raceName };
-      });
-
-      return calendar;
+      const data = await fastf1Api.getAvailableRaces(YEAR);
+      if (Array.isArray(data) && data.length > 0) return mapRaceNames(data);
     } catch (err) {
-      console.error('Error fetching race calendar:', err);
-      return [];
+      console.error('Error fetching race calendar via service:', err);
     }
+
+    // Fallback: direct fetch to local backend (in case env/baseUrl issues)
+    try {
+      const res = await fetch(`http://localhost:5000/api/available_races/${YEAR}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) return mapRaceNames(data);
+      }
+    } catch (err) {
+      console.error('Fallback fetch for race calendar failed:', err);
+    }
+
+    return [];
   };
 
-  // === 🧩 Fetch predictions from backend ===
+  // Fetch predictions from backend
   const fetchPredictions = async () => {
     if (!selectedRace) return;
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(
-        `http://127.0.0.1:5001/api/race_predict?year=2025&gp_name=${encodeURIComponent(selectedRace)}`
-      );
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
+      const data = await fastf1Api.getRacePrediction(YEAR, selectedRace);
       setPredictions(data);
     } catch (err) {
       console.error('Error fetching predictions:', err);
@@ -79,11 +87,11 @@ export default function PredictionsPage() {
     }
   };
 
-  // === 🧩 Load available races once ===
+  // Load available races once
   useEffect(() => {
     const loadRaceCalendar = async () => {
       const calendar = await fetchRaceCalendar();
-      const available = calendar.map(r => r.name);
+      const available = calendar.map((r) => r.name);
       setAvailableRaces(available);
       setCheckingRaces(false);
 
@@ -92,14 +100,14 @@ export default function PredictionsPage() {
     loadRaceCalendar();
   }, []);
 
-  // === 🧩 Fetch predictions when selection changes ===
+  // Fetch predictions when selection changes
   useEffect(() => {
     if (availableRaces.length > 0 && selectedRace) {
       fetchPredictions();
     }
   }, [selectedRace, availableRaces]);
 
-  // === UI states ===
+  // UI states
   if (checkingRaces) {
     return (
       <div className="pt-28 p-6 font-sans text-gray-200 max-w-7xl mx-auto text-center">
@@ -117,7 +125,9 @@ export default function PredictionsPage() {
         <h1 className="text-4xl font-bold mb-4 text-white bg-gradient-to-r from-blue-400 via-purple-500 to-red-500 bg-clip-text text-transparent">
           Race Predictions
         </h1>
-        <p className="text-lg text-white/70">No 2025 races with qualifying data yet.</p>
+        <p className="text-lg text-white/70">
+          No {YEAR} races with qualifying data yet. Ensure the backend is running at http://localhost:5000 and has qualifying data in the DB.
+        </p>
       </div>
     );
   }
@@ -170,7 +180,7 @@ export default function PredictionsPage() {
             Race Predictions
           </h1>
           <p className="text-lg text-white/70">
-            Machine learning race predictions based on qualifying results and tire degradation analysis
+            Predictions use qualifying results plus average tyre degradation from the database
           </p>
         </div>
 
@@ -186,7 +196,7 @@ export default function PredictionsPage() {
 
         {/* Prediction table */}
         {predictions && (
-          <DashboardCard title={`2025 ${selectedRace} GP - Race Predictions`}>
+          <DashboardCard title={`${YEAR} ${selectedRace} GP - Race Predictions`}>
             <div className="overflow-x-auto max-h-[32rem] overflow-y-auto custom-scrollbar">
               <table className="min-w-full text-sm">
                 <thead>
@@ -204,7 +214,7 @@ export default function PredictionsPage() {
                     const positionChange = p.predicted_race_position - p.qualifying_position;
                     const teamName = p.constructor_name || 'Unknown';
                     return (
-                      <tr key={p.position} className="border-t border-white/10 hover:bg-white/5 transition-colors">
+                      <tr key={`${p.driver}-${p.predicted_race_position}`} className="border-t border-white/10 hover:bg-white/5 transition-colors">
                         <td className="py-3 pr-4">
                           <div className="flex items-center gap-2">
                             <span className="text-white font-bold text-lg">{p.predicted_race_position}</span>

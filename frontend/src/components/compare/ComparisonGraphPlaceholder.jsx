@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
+import fastf1Api from '../../services/api';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -47,13 +48,10 @@ export default function ComparisonGraphPlaceholder({
           console.log('Fetching driver Elo history with years:', { selectedYear1, selectedYear2 });
           
           // Fetch Elo history for both drivers
-          const [history1Response, history2Response] = await Promise.all([
-            fetch(`http://localhost:5001/api/rankings/drivers/elo/history/${selectedDriver1}?season=${selectedYear1}`),
-            fetch(`http://localhost:5001/api/rankings/drivers/elo/history/${selectedDriver2}?season=${selectedYear2}`)
+          const [history1, history2] = await Promise.all([
+            fastf1Api.getDriverEloHistory(selectedDriver1, selectedYear1),
+            fastf1Api.getDriverEloHistory(selectedDriver2, selectedYear2)
           ]);
-          
-          const history1 = await history1Response.json();
-          const history2 = await history2Response.json();
           
           setHistoryData({
             competitor1: history1,
@@ -79,13 +77,10 @@ export default function ComparisonGraphPlaceholder({
           console.log('Fetching constructor Elo history with years:', { selectedYear1, selectedYear2 });
           
           // Fetch Elo history for both constructors
-          const [history1Response, history2Response] = await Promise.all([
-            fetch(`http://localhost:5001/api/rankings/constructors/elo/history/${selectedConstructor1}?season=${selectedYear1}`),
-            fetch(`http://localhost:5001/api/rankings/constructors/elo/history/${selectedConstructor2}?season=${selectedYear2}`)
+          const [history1, history2] = await Promise.all([
+            fastf1Api.getConstructorEloHistory(selectedConstructor1, selectedYear1),
+            fastf1Api.getConstructorEloHistory(selectedConstructor2, selectedYear2)
           ]);
-          
-          const history1 = await history1Response.json();
-          const history2 = await history2Response.json();
           
           setHistoryData({
             competitor1: history1,
@@ -296,4 +291,3 @@ export default function ComparisonGraphPlaceholder({
     </div>
   );
 }
-

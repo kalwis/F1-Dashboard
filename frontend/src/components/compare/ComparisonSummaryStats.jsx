@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import fastf1Api from '../../services/api';
 
 export default function ComparisonSummaryStats({
   comparisonType,
@@ -21,8 +22,7 @@ export default function ComparisonSummaryStats({
       if (comparisonType === 'driver-vs-driver' && selectedDriver1 && selectedDriver2) {
         try {
           setLoading(true);
-          const response = await fetch(`http://localhost:5001/api/drivers/compare/${selectedDriver1}/${selectedDriver2}`);
-          const data = await response.json();
+          const data = await fastf1Api.compareDrivers(selectedDriver1, selectedDriver2);
           setComparisonData(data);
         } catch (error) {
           console.error('Error fetching driver comparison:', error);
@@ -33,8 +33,7 @@ export default function ComparisonSummaryStats({
       } else if (comparisonType === 'constructor-vs-constructor' && selectedConstructor1 && selectedConstructor2) {
         try {
           setLoading(true);
-          const response = await fetch(`http://localhost:5001/api/constructors/compare/${selectedConstructor1}/${selectedConstructor2}`);
-          const data = await response.json();
+          const data = await fastf1Api.compareConstructors(selectedConstructor1, selectedConstructor2);
           setComparisonData(data);
         } catch (error) {
           console.error('Error fetching constructor comparison:', error);
@@ -48,9 +47,15 @@ export default function ComparisonSummaryStats({
     fetchComparisonData();
   }, [comparisonType, selectedDriver1, selectedDriver2, selectedConstructor1, selectedConstructor2]);
 
-  const getDriverName = (driverId) => {
+  const getDriverName = (driverId, isFirst) => {
     const driver = drivers.find(d => d.driver_id === parseInt(driverId));
-    return driver ? `${driver.first_name} ${driver.last_name}` : 'N/A';
+    if (driver) return `${driver.first_name} ${driver.last_name}`;
+    // Fallback to comparison payload if it has the name
+    const payload = isFirst ? comparisonData?.driver1 : comparisonData?.driver2;
+    if (payload?.first_name || payload?.last_name) {
+      return `${payload.first_name || ''} ${payload.last_name || ''}`.trim() || 'N/A';
+    }
+    return 'N/A';
   };
 
   const getConstructorName = (constructorId) => {
@@ -107,7 +112,7 @@ export default function ComparisonSummaryStats({
         </div>
         <div className="text-white text-base font-bold truncate">
           {comparisonType === 'driver-vs-driver' 
-            ? getDriverName(selectedDriver1)
+            ? getDriverName(selectedDriver1, true)
             : getConstructorName(selectedConstructor1)}
         </div>
         <div className="text-blue-300/60 text-xs mt-1">
@@ -123,7 +128,7 @@ export default function ComparisonSummaryStats({
         </div>
         <div className="text-white text-base font-bold truncate">
           {comparisonType === 'driver-vs-driver' 
-            ? getDriverName(selectedDriver2)
+            ? getDriverName(selectedDriver2, false)
             : getConstructorName(selectedConstructor2)}
         </div>
         <div className="text-purple-300/60 text-xs mt-1">
@@ -148,4 +153,3 @@ export default function ComparisonSummaryStats({
     </div>
   );
 }
-

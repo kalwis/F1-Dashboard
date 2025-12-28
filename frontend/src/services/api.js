@@ -1,6 +1,6 @@
 // FastF1 API Service for CRA + Vercel
 
-const BASE_URL = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, ''); // strip trailing slashes
+const BASE_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace(/\/+$/, ''); // strip trailing slashes
 
 function join(base, path) {
   // ensures exactly one slash between base and path
@@ -10,9 +10,9 @@ function join(base, path) {
 class FastF1ApiService {
   constructor() {
     // Use local prediction API for race predictions, production API for other data
-    this.baseUrl = 'https://f1-dashboard-doj4.onrender.com/api';
-    this.predictionBaseUrl = 'http://localhost:8000';
-    //this.baseUrl = BASE_URL;        // e.g. https://f1-dashboard-doj4.onrender.com/api
+    this.baseUrl = BASE_URL; // defaults to local backend unless env overrides
+    // Prediction endpoints live at /api/... on the backend; strip trailing /api from base if present
+    this.predictionBaseUrl = BASE_URL.replace(/\/api$/, '');
     this.cache = new Map();
     this.cacheTimeout = 5 * 60 * 1000;
   }
@@ -160,6 +160,61 @@ class FastF1ApiService {
     );
   }
 
+  // Elo / comparison (DB-backed)
+  getDriverEloRankings(year) {
+    const params = {};
+    if (year) params.season = year;
+    return this.fetchWithCache(`driverElo_${year || 'latest'}`, () =>
+      this.makeRequest('/rankings/drivers/elo', params)
+    );
+  }
+
+  getCombinedRankings(year) {
+    const params = {};
+    if (year) params.season = year;
+    return this.fetchWithCache(`combinedRankings_${year || 'latest'}`, () =>
+      this.makeRequest('/rankings/combined', params)
+    );
+  }
+
+  compareDrivers(driver1Id, driver2Id) {
+    return this.fetchWithCache(`compareDrivers_${driver1Id}_${driver2Id}`, () =>
+      fetch(join(this.baseUrl, `/drivers/compare/${driver1Id}/${driver2Id}`)).then(async res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+    );
+  }
+
+  compareConstructors(constructor1Id, constructor2Id) {
+    return this.fetchWithCache(`compareConstructors_${constructor1Id}_${constructor2Id}`, () =>
+      fetch(join(this.baseUrl, `/constructors/compare/${constructor1Id}/${constructor2Id}`)).then(async res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+    );
+  }
+
+  getDriverEloHistory(driverId, year) {
+    const params = year ? `?season=${year}` : '';
+    return this.fetchWithCache(`driverHistory_${driverId}_${year || 'all'}`, () =>
+      fetch(join(this.baseUrl, `/rankings/drivers/elo/history/${driverId}${params}`)).then(async res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+    );
+  }
+
+  getConstructorEloHistory(constructorId, year) {
+    const params = year ? `?season=${year}` : '';
+    return this.fetchWithCache(`constructorHistory_${constructorId}_${year || 'all'}`, () =>
+      fetch(join(this.baseUrl, `/rankings/constructors/elo/history/${constructorId}${params}`)).then(async res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+    );
+  }
+
   getDrivers(year = 'current') {
     return this.fetchWithCache(`drivers_${year}`, () =>
       this.makeRequest('/drivers', { year })
@@ -191,25 +246,69 @@ class FastF1ApiService {
   }
 
   // Race Prediction API
-  // Race Prediction API
   async getRacePrediction(year, gpName) {
-    return this.fetchWithCache(`racePrediction_${year}_${gpName}`, () => {
-      const url = new URL(join(this.predictionBaseUrl, '/api/race_predict'));
+    const doRequest = async (base) => {
+      const url = new URL(join(base, '/api/race_predict'));
       url.searchParams.append('year', year);
       url.searchParams.append('gp_name', gpName);
-      
-      return fetch(url.toString()).then(async res => {
-        if (!res.ok) {
-          const errorData = await res.json();
-          const error = new Error(errorData.detail || `HTTP ${res.status}`);
-          error.response = {
-            status: res.status,
-            data: errorData
-          };
-          throw error;
+
+      const res = await fetch(url.toString());
+      const contentType = res.headers.get('content-type') || '';
+      const bodyText = await res.text();
+
+      if (!res.ok) {
+        // Try to parse JSON error if possible
+        if (contentType.includes('application/json')) {
+          try {
+            const errJson = JSON.parse(bodyText);
+            const error = new Error(errJson.detail || errJson.error || `HTTP ${res.status}`);
+            error.response = { status: res.status, data: errJson, raw: bodyText };
+            throw error;
+          } catch (_) {
+            const error = new Error(`HTTP ${res.status}`);
+            error.response = { status: res.status, raw: bodyText };
+            throw error;
+          }
         }
+        const error = new Error(`Non-JSON response (status ${res.status}): ${bodyText.slice(0, 120)}`);
+        error.response = { status: res.status, raw: bodyText };
+        throw error;
+      }
+
+      if (!contentType.includes('application/json')) {
+        const error = new Error(`Prediction API returned non-JSON: ${bodyText.slice(0, 120)}`);
+        error.response = { status: res.status, raw: bodyText };
+        throw error;
+      }
+
+      return JSON.parse(bodyText);
+    };
+
+    return this.fetchWithCache(`racePrediction_${year}_${gpName}`, async () => {
+      try {
+        return await doRequest(this.predictionBaseUrl);
+      } catch (err) {
+        // Fallback directly to localhost:5000 in case env/base URL mismatch
+        return doRequest('http://localhost:5000');
+      }
+    });
+  }
+
+  async getAvailableRaces(year) {
+    return this.fetchWithCache(`availableRaces_${year}`, async () => {
+      // try env/base first
+      try {
+        const url = new URL(join(this.predictionBaseUrl, `/api/available_races/${year}`));
+        const res = await fetch(url.toString());
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
-      });
+      } catch (err) {
+        // fallback to localhost
+        const url = new URL(`http://localhost:5000/api/available_races/${year}`);
+        const res = await fetch(url.toString());
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      }
     });
   }
 }
