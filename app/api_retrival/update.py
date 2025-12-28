@@ -362,4 +362,6 @@ def update_latest_round(year: int):
 
 if __name__ == "__main__":
     current_year = datetime.now().year
-    update_latest_round(current_year)
+    # Check current season and peek at next season (no-ops if no past rounds yet)
+    for yr in (current_year, current_year + 1):
+        update_latest_round(yr)

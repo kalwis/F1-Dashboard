@@ -5,17 +5,20 @@ import GPSSelector from '../components/shared/GPSSelector';
 import SyncStatus from '../components/layout/SyncStatus';
 import fastf1Api from '../services/api';
 
-const YEAR = 2025;
+const currentYear = new Date().getFullYear();
 
 export default function PredictionsPage() {
   const navigate = useNavigate();
   const [predictions, setPredictions] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [infoMessage, setInfoMessage] = useState('');
   const [selectedRace, setSelectedRace] = useState('');
   const [availableRaces, setAvailableRaces] = useState([]);
+  const [availableYears, setAvailableYears] = useState([currentYear]);
   const [checkingRaces, setCheckingRaces] = useState(true);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
 
   // Fetch races that actually have qualifying data in DB
   const mapRaceNames = (data) => data.map((raceName) => {
@@ -48,9 +51,9 @@ export default function PredictionsPage() {
     return { name: predictionName, raceName };
   });
 
-  const fetchRaceCalendar = async () => {
+  const fetchRaceCalendar = async (year) => {
     try {
-      const data = await fastf1Api.getAvailableRaces(YEAR);
+      const data = await fastf1Api.getAvailableRaces(year);
       if (Array.isArray(data) && data.length > 0) return mapRaceNames(data);
     } catch (err) {
       console.error('Error fetching race calendar via service:', err);
@@ -58,7 +61,7 @@ export default function PredictionsPage() {
 
     // Fallback: direct fetch to local backend (in case env/baseUrl issues)
     try {
-      const res = await fetch(`http://localhost:5000/api/available_races/${YEAR}`);
+      const res = await fetch(`http://localhost:5000/api/available_races/${year}`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) return mapRaceNames(data);
@@ -76,7 +79,16 @@ export default function PredictionsPage() {
     try {
       setLoading(true);
       setError(null);
-      const data = await fastf1Api.getRacePrediction(YEAR, selectedRace);
+      setInfoMessage('');
+
+      if (selectedYear > currentYear) {
+        setLoading(false);
+        setPredictions({ predictions: [] });
+        setInfoMessage(`Predictions not available yet for ${selectedYear}.`);
+        return;
+      }
+
+      const data = await fastf1Api.getRacePrediction(selectedYear, selectedRace);
       setPredictions(data);
     } catch (err) {
       console.error('Error fetching predictions:', err);
@@ -89,8 +101,22 @@ export default function PredictionsPage() {
 
   // Load available races once
   useEffect(() => {
+    // discover next year availability
+    const checkNextYear = async () => {
+      const nextYear = currentYear + 1;
+      const racesNext = await fetchRaceCalendar(nextYear);
+      if (Array.isArray(racesNext) && racesNext.length > 0) {
+        setAvailableYears([currentYear, nextYear]);
+      } else {
+        setAvailableYears([currentYear]);
+      }
+    };
+    checkNextYear();
+  }, []);
+
+  useEffect(() => {
     const loadRaceCalendar = async () => {
-      const calendar = await fetchRaceCalendar();
+      const calendar = await fetchRaceCalendar(selectedYear);
       const available = calendar.map((r) => r.name);
       setAvailableRaces(available);
       setCheckingRaces(false);
@@ -98,7 +124,7 @@ export default function PredictionsPage() {
       if (available.length > 0) setSelectedRace(available[0]);
     };
     loadRaceCalendar();
-  }, []);
+  }, [selectedYear]);
 
   // Fetch predictions when selection changes
   useEffect(() => {
@@ -126,7 +152,7 @@ export default function PredictionsPage() {
           Race Predictions
         </h1>
         <p className="text-lg text-white/70">
-          No {YEAR} races with qualifying data yet. Ensure the backend is running at http://localhost:5000 and has qualifying data in the DB.
+          No {selectedYear} races with qualifying data yet. Ensure the backend is running at http://localhost:5000 and has qualifying data in the DB.
         </p>
       </div>
     );
@@ -177,11 +203,35 @@ export default function PredictionsPage() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white bg-gradient-to-r from-blue-400 via-purple-500 to-red-500 bg-clip-text text-transparent">
-            Race Predictions
+            Race Predictions ({selectedYear})
           </h1>
           <p className="text-lg text-white/70">
             Predictions use qualifying results plus average tyre degradation from the database
           </p>
+        </div>
+
+        {/* Year selector */}
+        <div className="mb-6 flex flex-wrap gap-2 justify-center">
+          {availableYears.map((yr) => (
+            <button
+              key={yr}
+              onClick={() => {
+                setSelectedYear(yr);
+                setSelectedRace('');
+                setPredictions(null);
+                setError(null);
+                setInfoMessage('');
+              }}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                selectedYear === yr
+                  ? 'bg-blue-500 text-white shadow-lg ring-2 ring-blue-400'
+                  : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white border border-white/20'
+              }`}
+              disabled={loading}
+            >
+              {yr}
+            </button>
+          ))}
         </div>
 
         {/* Race selector */}
@@ -196,95 +246,104 @@ export default function PredictionsPage() {
 
         {/* Prediction table */}
         {predictions && (
-          <DashboardCard title={`${YEAR} ${selectedRace} GP - Race Predictions`}>
-            <div className="overflow-x-auto max-h-[32rem] overflow-y-auto custom-scrollbar">
-              <table className="min-w-full text-sm">
-                <thead>
-                  <tr className="text-left text-white/80 border-b border-white/10">
-                    <th className="pb-3 font-semibold">Predicted</th>
-                    <th className="pb-3 font-semibold">Driver</th>
-                    <th className="pb-3 font-semibold">Team</th>
-                    <th className="pb-3 font-semibold">Qualifying</th>
-                    <th className="pb-3 font-semibold">Q Time</th>
-                    <th className="pb-3 font-semibold">Tire Performance</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {predictions.predictions.slice(0, 20).map((p) => {
-                    const positionChange = p.predicted_race_position - p.qualifying_position;
-                    const teamName = p.constructor_name || 'Unknown';
-                    return (
-                      <tr key={`${p.driver}-${p.predicted_race_position}`} className="border-t border-white/10 hover:bg-white/5 transition-colors">
-                        <td className="py-3 pr-4">
-                          <div className="flex items-center gap-2">
-                            <span className="text-white font-bold text-lg">{p.predicted_race_position}</span>
-                            {positionChange !== 0 && (
-                              <span
-                                className={`text-xs px-2 py-1 rounded-full font-medium ${
-                                  positionChange < 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                                }`}
-                              >
-                                {positionChange < 0 ? `+${Math.abs(positionChange)}` : `-${positionChange}`}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="py-3 pr-4 text-white font-medium">{p.driver}</td>
-                        <td className="py-3 pr-4 text-white/80 text-sm">{teamName}</td>
-                        <td className="py-3 pr-4 text-white/80 font-medium">P{p.qualifying_position}</td>
-                        <td className="py-3 pr-4 text-white/80 text-sm">
-                          {p.qualifying_time ? `${p.qualifying_time.toFixed(3)}s` : 'N/A'}
-                        </td>
-                        <td className="py-3 text-white/80">
-                          {p.tire_deg_rate !== null && p.tire_deg_rate !== undefined ? (
-                            <div className="flex flex-col gap-2">
-                              <div className="flex items-center gap-2">
+          <DashboardCard title={`${selectedYear} ${selectedRace} GP - Race Predictions`}>
+            {infoMessage && (
+              <div className="mb-4 text-sm text-yellow-300/90 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2">
+                {infoMessage}
+              </div>
+            )}
+            {predictions.predictions.length === 0 ? (
+              <div className="text-center text-white/70 py-6">No prediction data available for this race.</div>
+            ) : (
+              <div className="overflow-x-auto max-h-[32rem] overflow-y-auto custom-scrollbar">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-white/80 border-b border-white/10">
+                      <th className="pb-3 font-semibold">Predicted</th>
+                      <th className="pb-3 font-semibold">Driver</th>
+                      <th className="pb-3 font-semibold">Team</th>
+                      <th className="pb-3 font-semibold">Qualifying</th>
+                      <th className="pb-3 font-semibold">Q Time</th>
+                      <th className="pb-3 font-semibold">Tire Performance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {predictions.predictions.slice(0, 20).map((p) => {
+                      const positionChange = p.predicted_race_position - p.qualifying_position;
+                      const teamName = p.constructor_name || 'Unknown';
+                      return (
+                        <tr key={`${p.driver}-${p.predicted_race_position}`} className="border-t border-white/10 hover:bg-white/5 transition-colors">
+                          <td className="py-3 pr-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-white font-bold text-lg">{p.predicted_race_position}</span>
+                              {positionChange !== 0 && (
                                 <span
-                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    p.tire_deg_rate < 0
-                                      ? 'bg-green-500/20 text-green-400'
+                                  className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                    positionChange < 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                                  }`}
+                                >
+                                  {positionChange < 0 ? `+${Math.abs(positionChange)}` : `-${positionChange}`}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 pr-4 text-white font-medium">{p.driver}</td>
+                          <td className="py-3 pr-4 text-white/80 text-sm">{teamName}</td>
+                          <td className="py-3 pr-4 text-white/80 font-medium">P{p.qualifying_position}</td>
+                          <td className="py-3 pr-4 text-white/80 text-sm">
+                            {p.qualifying_time ? `${p.qualifying_time.toFixed(3)}s` : 'N/A'}
+                          </td>
+                          <td className="py-3 text-white/80">
+                            {p.tire_deg_rate !== null && p.tire_deg_rate !== undefined ? (
+                              <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                      p.tire_deg_rate < 0
+                                        ? 'bg-green-500/20 text-green-400'
+                                        : p.tire_deg_rate < 0.5
+                                        ? 'bg-yellow-500/20 text-yellow-400'
+                                        : 'bg-red-500/20 text-red-400'
+                                    }`}
+                                  >
+                                    {p.tire_deg_rate < 0
+                                      ? 'Excellent Tire Life'
                                       : p.tire_deg_rate < 0.5
-                                      ? 'bg-yellow-500/20 text-yellow-400'
-                                      : 'bg-red-500/20 text-red-400'
-                                  }`}
-                                >
-                                  {p.tire_deg_rate < 0
-                                    ? 'Excellent Tire Life'
-                                    : p.tire_deg_rate < 0.5
-                                    ? 'Good Tire Life'
-                                    : 'Poor Tire Life'}
-                                </span>
-                                <span
-                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    p.prediction_method === 'qualifying_and_tire_deg'
-                                      ? 'bg-blue-500/20 text-blue-400'
-                                      : 'bg-orange-500/20 text-orange-400'
-                                  }`}
-                                >
-                                  {p.prediction_method === 'qualifying_and_tire_deg'
-                                    ? 'High Confidence'
-                                    : 'Medium Confidence'}
-                                </span>
+                                      ? 'Good Tire Life'
+                                      : 'Poor Tire Life'}
+                                  </span>
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                      p.prediction_method === 'qualifying_and_tire_deg'
+                                        ? 'bg-blue-500/20 text-blue-400'
+                                        : 'bg-orange-500/20 text-orange-400'
+                                    }`}
+                                  >
+                                    {p.prediction_method === 'qualifying_and_tire_deg'
+                                      ? 'High Confidence'
+                                      : 'Medium Confidence'}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-white/60">
+                                  Tire degradation: {p.tire_deg_rate.toFixed(3)}s/lap
+                                </div>
                               </div>
-                              <div className="text-xs text-white/60">
-                                Tire degradation: {p.tire_deg_rate.toFixed(3)}s/lap
+                            ) : (
+                              <div className="flex flex-col gap-2">
+                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-400">
+                                  Qualifying Only
+                                </span>
+                                <span className="text-xs text-white/40">No tire data available</span>
                               </div>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col gap-2">
-                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-400">
-                                Qualifying Only
-                              </span>
-                              <span className="text-xs text-white/40">No tire data available</span>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </DashboardCard>
         )}
 
