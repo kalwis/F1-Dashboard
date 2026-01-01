@@ -32,10 +32,16 @@ def rows_to_dict_list(cursor_rows):
     """Convert sqlite rows to list of dicts."""
     return [dict(row) for row in cursor_rows]
 
+def normalize_year_param(year_param):
+    """Resolve 'current' or missing year to the actual current year."""
+    if year_param in (None, "", "current"):
+        return str(datetime.now().year)
+    return year_param
+
 @app.route('/api/driver-standings', methods=['GET'])
 def get_driver_standings():
     try:
-        year = request.args.get('year', 'current')
+        year = normalize_year_param(request.args.get('year'))
         response = ergast.get_driver_standings(year)
         
         # The response.content is a list containing a pandas DataFrame
@@ -78,7 +84,7 @@ def get_driver_standings():
 @app.route('/api/constructor-standings', methods=['GET'])
 def get_constructor_standings():
     try:
-        year = request.args.get('year', 'current')
+        year = normalize_year_param(request.args.get('year'))
         response = ergast.get_constructor_standings(year)
         
         # The response.content is a list containing a pandas DataFrame
@@ -116,7 +122,7 @@ def get_constructor_standings():
 @app.route('/api/season-schedule', methods=['GET'])
 def get_season_schedule():
     try:
-        year = request.args.get('year', 'current')
+        year = normalize_year_param(request.args.get('year'))
         response = ergast.get_race_schedule(year)
         
         # For season schedule, response is directly a DataFrame
@@ -154,7 +160,7 @@ def get_season_schedule():
 @app.route('/api/race-results', methods=['GET'])
 def get_race_results():
     try:
-        year = request.args.get('year', 'current')
+        year = normalize_year_param(request.args.get('year'))
         round_num = request.args.get('round')
         
         if not round_num:
@@ -200,7 +206,7 @@ def get_race_results():
 @app.route('/api/qualifying-results', methods=['GET'])
 def get_qualifying_results():
     try:
-        year = request.args.get('year', 'current')
+        year = normalize_year_param(request.args.get('year'))
         round_num = request.args.get('round')
         
         if not round_num:
@@ -248,7 +254,7 @@ def get_qualifying_results():
 @app.route('/api/drivers', methods=['GET'])
 def get_drivers():
     try:
-        year = request.args.get('year', 'current')
+        year = normalize_year_param(request.args.get('year'))
         response = ergast.get_driver_info(year)
         
         # The response.content is a list containing a pandas DataFrame
@@ -282,7 +288,7 @@ def get_drivers():
 @app.route('/api/constructors', methods=['GET'])
 def get_constructors():
     try:
-        year = request.args.get('year', 'current')
+        year = normalize_year_param(request.args.get('year'))
         response = ergast.get_constructor_info(year)
         
         # The response.content is a list containing a pandas DataFrame
@@ -315,7 +321,7 @@ def get_constructors():
 @app.route('/api/circuits', methods=['GET'])
 def get_circuits():
     try:
-        year = request.args.get('year', 'current')
+        year = normalize_year_param(request.args.get('year'))
         response = ergast.get_circuits(year)
 
         # For circuits, response might be directly a DataFrame
