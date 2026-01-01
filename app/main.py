@@ -32,21 +32,34 @@ def rows_to_dict_list(cursor_rows):
     """Convert sqlite rows to list of dicts."""
     return [dict(row) for row in cursor_rows]
 
-def normalize_year_param(year_param):
+def resolve_year_param(year_param):
     """Resolve 'current' or missing year to the actual current year."""
     if year_param in (None, "", "current"):
-        return str(datetime.now().year)
-    return year_param
+        return str(datetime.now().year), True
+    return str(year_param), False
+
+def get_prev_year():
+    return str(datetime.now().year - 1)
+
+def extract_first_df(response):
+    if response.content and len(response.content) > 0:
+        return response.content[0]
+    return None
 
 @app.route('/api/driver-standings', methods=['GET'])
 def get_driver_standings():
     try:
-        year = normalize_year_param(request.args.get('year'))
+        year, was_current = resolve_year_param(request.args.get('year'))
         response = ergast.get_driver_standings(year)
         
         # The response.content is a list containing a pandas DataFrame
-        if response.content and len(response.content) > 0:
-            df = response.content[0]  # Get the first (and only) DataFrame
+        df = extract_first_df(response)
+        if (df is None or df.empty) and was_current:
+            year = get_prev_year()
+            response = ergast.get_driver_standings(year)
+            df = extract_first_df(response)
+
+        if df is not None and not df.empty:
             
             # Format the response to match the expected structure
             formatted_standings = []
@@ -84,12 +97,17 @@ def get_driver_standings():
 @app.route('/api/constructor-standings', methods=['GET'])
 def get_constructor_standings():
     try:
-        year = normalize_year_param(request.args.get('year'))
+        year, was_current = resolve_year_param(request.args.get('year'))
         response = ergast.get_constructor_standings(year)
         
         # The response.content is a list containing a pandas DataFrame
-        if response.content and len(response.content) > 0:
-            df = response.content[0]  # Get the first (and only) DataFrame
+        df = extract_first_df(response)
+        if (df is None or df.empty) and was_current:
+            year = get_prev_year()
+            response = ergast.get_constructor_standings(year)
+            df = extract_first_df(response)
+
+        if df is not None and not df.empty:
             
             # Format the response to match the expected structure
             formatted_standings = []
@@ -122,7 +140,7 @@ def get_constructor_standings():
 @app.route('/api/season-schedule', methods=['GET'])
 def get_season_schedule():
     try:
-        year = normalize_year_param(request.args.get('year'))
+        year, was_current = resolve_year_param(request.args.get('year'))
         response = ergast.get_race_schedule(year)
         
         # For season schedule, response is directly a DataFrame
@@ -130,6 +148,11 @@ def get_season_schedule():
             df = response.content
         else:
             df = response
+
+        if (df is None or df.empty) and was_current:
+            year = get_prev_year()
+            response = ergast.get_race_schedule(year)
+            df = response.content if hasattr(response, 'content') else response
             
         # Format the response to match the expected structure
         formatted_races = []
@@ -160,7 +183,7 @@ def get_season_schedule():
 @app.route('/api/race-results', methods=['GET'])
 def get_race_results():
     try:
-        year = normalize_year_param(request.args.get('year'))
+        year, was_current = resolve_year_param(request.args.get('year'))
         round_num = request.args.get('round')
         
         if not round_num:
@@ -169,8 +192,13 @@ def get_race_results():
         response = ergast.get_race_results(year, round_num)
         
         # The response.content is a list containing a pandas DataFrame
-        if response.content and len(response.content) > 0:
-            df = response.content[0]  # Get the first (and only) DataFrame
+        df = extract_first_df(response)
+        if (df is None or df.empty) and was_current:
+            year = get_prev_year()
+            response = ergast.get_race_results(year, round_num)
+            df = extract_first_df(response)
+
+        if df is not None and not df.empty:
             
             # Format the response to match the expected structure
             formatted_results = []
@@ -206,7 +234,7 @@ def get_race_results():
 @app.route('/api/qualifying-results', methods=['GET'])
 def get_qualifying_results():
     try:
-        year = normalize_year_param(request.args.get('year'))
+        year, was_current = resolve_year_param(request.args.get('year'))
         round_num = request.args.get('round')
         
         if not round_num:
@@ -215,8 +243,13 @@ def get_qualifying_results():
         response = ergast.get_qualifying_results(year, round_num)
         
         # The response.content is a list containing a pandas DataFrame
-        if response.content and len(response.content) > 0:
-            df = response.content[0]  # Get the first (and only) DataFrame
+        df = extract_first_df(response)
+        if (df is None or df.empty) and was_current:
+            year = get_prev_year()
+            response = ergast.get_qualifying_results(year, round_num)
+            df = extract_first_df(response)
+
+        if df is not None and not df.empty:
             
             # Format the response to match the expected structure
             formatted_results = []
@@ -254,12 +287,17 @@ def get_qualifying_results():
 @app.route('/api/drivers', methods=['GET'])
 def get_drivers():
     try:
-        year = normalize_year_param(request.args.get('year'))
+        year, was_current = resolve_year_param(request.args.get('year'))
         response = ergast.get_driver_info(year)
         
         # The response.content is a list containing a pandas DataFrame
-        if response.content and len(response.content) > 0:
-            df = response.content[0]  # Get the first (and only) DataFrame
+        df = extract_first_df(response)
+        if (df is None or df.empty) and was_current:
+            year = get_prev_year()
+            response = ergast.get_driver_info(year)
+            df = extract_first_df(response)
+
+        if df is not None and not df.empty:
             
             # Format the response to match the expected structure
             formatted_drivers = []
@@ -288,12 +326,17 @@ def get_drivers():
 @app.route('/api/constructors', methods=['GET'])
 def get_constructors():
     try:
-        year = normalize_year_param(request.args.get('year'))
+        year, was_current = resolve_year_param(request.args.get('year'))
         response = ergast.get_constructor_info(year)
         
         # The response.content is a list containing a pandas DataFrame
-        if response.content and len(response.content) > 0:
-            df = response.content[0]  # Get the first (and only) DataFrame
+        df = extract_first_df(response)
+        if (df is None or df.empty) and was_current:
+            year = get_prev_year()
+            response = ergast.get_constructor_info(year)
+            df = extract_first_df(response)
+
+        if df is not None and not df.empty:
             
             # Format the response to match the expected structure
             formatted_constructors = []
@@ -321,7 +364,7 @@ def get_constructors():
 @app.route('/api/circuits', methods=['GET'])
 def get_circuits():
     try:
-        year = normalize_year_param(request.args.get('year'))
+        year, was_current = resolve_year_param(request.args.get('year'))
         response = ergast.get_circuits(year)
 
         # For circuits, response might be directly a DataFrame
@@ -329,6 +372,11 @@ def get_circuits():
             df = response.content
         else:
             df = response
+
+        if (df is None or df.empty) and was_current:
+            year = get_prev_year()
+            response = ergast.get_circuits(year)
+            df = response.content if hasattr(response, 'content') else response
             
         # Format the response to match the expected structure
         formatted_circuits = []
