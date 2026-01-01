@@ -1,2 +1,2 @@
-# Updated to use correct Flask app
-web: gunicorn app.api_retrival.apis:app
+# Updated to serve all endpoints used by the frontend
+web: gunicorn app.main:app

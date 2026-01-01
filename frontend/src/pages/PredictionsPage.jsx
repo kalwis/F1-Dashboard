@@ -59,17 +59,6 @@ export default function PredictionsPage() {
       console.error('Error fetching race calendar via service:', err);
     }
 
-    // Fallback: direct fetch to local backend (in case env/baseUrl issues)
-    try {
-      const res = await fetch(`http://localhost:5000/api/available_races/${year}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) return mapRaceNames(data);
-      }
-    } catch (err) {
-      console.error('Fallback fetch for race calendar failed:', err);
-    }
-
     return [];
   };
 
@@ -152,7 +141,7 @@ export default function PredictionsPage() {
           Race Predictions
         </h1>
         <p className="text-lg text-white/70">
-          No {selectedYear} races with qualifying data yet. Ensure the backend is running at http://localhost:5000 and has qualifying data in the DB.
+          No {selectedYear} races with qualifying data yet. Ensure the backend is running and has qualifying data in the DB.
         </p>
       </div>
     );

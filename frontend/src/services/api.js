@@ -284,31 +284,17 @@ class FastF1ApiService {
       return JSON.parse(bodyText);
     };
 
-    return this.fetchWithCache(`racePrediction_${year}_${gpName}`, async () => {
-      try {
-        return await doRequest(this.predictionBaseUrl);
-      } catch (err) {
-        // Fallback directly to localhost:5000 in case env/base URL mismatch
-        return doRequest('http://localhost:5000');
-      }
-    });
+    return this.fetchWithCache(`racePrediction_${year}_${gpName}`, () =>
+      doRequest(this.predictionBaseUrl)
+    );
   }
 
   async getAvailableRaces(year) {
     return this.fetchWithCache(`availableRaces_${year}`, async () => {
-      // try env/base first
-      try {
-        const url = new URL(join(this.predictionBaseUrl, `/api/available_races/${year}`));
-        const res = await fetch(url.toString());
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      } catch (err) {
-        // fallback to localhost
-        const url = new URL(`http://localhost:5000/api/available_races/${year}`);
-        const res = await fetch(url.toString());
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      }
+      const url = new URL(join(this.predictionBaseUrl, `/api/available_races/${year}`));
+      const res = await fetch(url.toString());
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
     });
   }
 }
