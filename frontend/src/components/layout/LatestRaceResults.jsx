@@ -7,24 +7,35 @@ export default function LatestRaceResults() {
   const [raceInfo, setRaceInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const currentYear = new Date().getFullYear();
 
   useEffect(() => {
     const fetchLatestResults = async () => {
       try {
-        // First get the current season schedule to find the latest completed race
-        const scheduleData = await fastf1Api.getSeasonSchedule();
-        const races = scheduleData.MRData.RaceTable.Races;
-        const today = new Date();
-        
-        // Find the most recent completed race
-        const completedRaces = races.filter(race => new Date(race.date) < today);
-        const latestRace = completedRaces[completedRaces.length - 1];
-        
+        const getLatestCompletedRace = (races) => {
+          const today = new Date();
+          const completedRaces = races.filter(race => new Date(race.date) < today);
+          return completedRaces[completedRaces.length - 1] || null;
+        };
+
+        // Prefer current season, but fall back to previous if no races completed yet
+        let seasonYear = currentYear;
+        let scheduleData = await fastf1Api.getSeasonSchedule(String(seasonYear));
+        let races = scheduleData.MRData.RaceTable.Races;
+        let latestRace = getLatestCompletedRace(races);
+
+        if (!latestRace) {
+          seasonYear = currentYear - 1;
+          scheduleData = await fastf1Api.getSeasonSchedule(String(seasonYear));
+          races = scheduleData.MRData.RaceTable.Races;
+          latestRace = getLatestCompletedRace(races);
+        }
+
         if (latestRace) {
-          setRaceInfo(latestRace);
+          setRaceInfo({ ...latestRace, seasonYear });
           
           // Get results for the latest race
-          const resultsData = await fastf1Api.getRaceResults('current', latestRace.round);
+          const resultsData = await fastf1Api.getRaceResults(String(seasonYear), latestRace.round);
           const raceResults = resultsData.MRData.RaceTable.Races[0].Results;
           // Show all drivers that gained points (positions 1-10 typically score points)
           const scoringDrivers = raceResults.filter(result => result.points > 0);
