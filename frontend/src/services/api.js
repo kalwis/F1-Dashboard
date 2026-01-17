@@ -299,4 +299,5 @@ class FastF1ApiService {
   }
 }
 
-export default new FastF1ApiService();
+const fastf1Api = new FastF1ApiService();
+export default fastf1Api;

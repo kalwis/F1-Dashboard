@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardCard from '../components/layout/DashboardCard';
 import GPSSelector from '../components/shared/GPSSelector';
@@ -21,7 +21,7 @@ export default function PredictionsPage() {
   const [selectedYear, setSelectedYear] = useState(currentYear);
 
   // Fetch races that actually have qualifying data in DB
-  const mapRaceNames = (data) => data.map((raceName) => {
+  const mapRaceNames = useCallback((data) => data.map((raceName) => {
     const lowerName = raceName.toLowerCase();
     const normalizedName = lowerName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     let predictionName = raceName;
@@ -50,9 +50,9 @@ export default function PredictionsPage() {
     else if (raceName.includes('Qatar')) predictionName = 'Qatar';
     else if (raceName.includes('Abu Dhabi')) predictionName = 'Abu Dhabi';
     return { name: predictionName, raceName };
-  });
+  }), []);
 
-  const fetchRaceCalendar = async (year) => {
+  const fetchRaceCalendar = useCallback(async (year) => {
     try {
       const data = await fastf1Api.getAvailableRaces(year);
       if (Array.isArray(data) && data.length > 0) return mapRaceNames(data);
@@ -61,10 +61,10 @@ export default function PredictionsPage() {
     }
 
     return [];
-  };
+  }, [mapRaceNames]);
 
   // Fetch predictions from backend
-  const fetchPredictions = async () => {
+  const fetchPredictions = useCallback(async () => {
     if (!selectedRace) return;
     try {
       setLoading(true);
@@ -87,7 +87,7 @@ export default function PredictionsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedRace, selectedYear]);
 
   // Load available races once
   useEffect(() => {
@@ -112,7 +112,7 @@ export default function PredictionsPage() {
       }
     };
     loadAvailableYears();
-  }, []);
+  }, [fetchRaceCalendar, selectedYear]);
 
   useEffect(() => {
     const loadRaceCalendar = async () => {
@@ -124,14 +124,14 @@ export default function PredictionsPage() {
       if (available.length > 0) setSelectedRace(available[0]);
     };
     loadRaceCalendar();
-  }, [selectedYear]);
+  }, [fetchRaceCalendar, selectedYear]);
 
   // Fetch predictions when selection changes
   useEffect(() => {
     if (availableRaces.length > 0 && selectedRace) {
       fetchPredictions();
     }
-  }, [selectedRace, availableRaces]);
+  }, [availableRaces, fetchPredictions, selectedRace]);
 
   // UI states
   if (checkingRaces) {

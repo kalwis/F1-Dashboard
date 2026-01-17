@@ -7,11 +7,11 @@ export default function LatestRaceResults() {
   const [raceInfo, setRaceInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const currentYear = new Date().getFullYear();
 
   useEffect(() => {
     const fetchLatestResults = async () => {
       try {
+        const currentYear = new Date().getFullYear();
         const getLatestCompletedRace = (races) => {
           const today = new Date();
           const completedRaces = races.filter(race => new Date(race.date) < today);
