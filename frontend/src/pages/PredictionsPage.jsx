@@ -23,6 +23,7 @@ export default function PredictionsPage() {
   // Fetch races that actually have qualifying data in DB
   const mapRaceNames = (data) => data.map((raceName) => {
     const lowerName = raceName.toLowerCase();
+    const normalizedName = lowerName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     let predictionName = raceName;
     if (raceName.includes('Australian')) predictionName = 'Australia';
     else if (raceName.includes('Chinese')) predictionName = 'China';
@@ -44,7 +45,7 @@ export default function PredictionsPage() {
     else if (raceName.includes('Singapore')) predictionName = 'Singapore';
     else if (raceName.includes('United States') && !raceName.includes('Miami') && !raceName.includes('Las Vegas')) predictionName = 'United States';
     else if (raceName.includes('Mexico City')) predictionName = 'Mexico';
-    else if (lowerName.includes('sao paulo') || lowerName.includes('são paulo') || lowerName.trim() === 'brazilian grand prix') predictionName = 'Brazil';
+    else if (normalizedName.includes('sao paulo') || normalizedName.trim() === 'brazilian grand prix') predictionName = 'Brazil';
     else if (raceName.includes('Las Vegas')) predictionName = 'Las Vegas';
     else if (raceName.includes('Qatar')) predictionName = 'Qatar';
     else if (raceName.includes('Abu Dhabi')) predictionName = 'Abu Dhabi';
@@ -90,17 +91,27 @@ export default function PredictionsPage() {
 
   // Load available races once
   useEffect(() => {
-    // discover next year availability
-    const checkNextYear = async () => {
-      const nextYear = currentYear + 1;
-      const racesNext = await fetchRaceCalendar(nextYear);
-      if (Array.isArray(racesNext) && racesNext.length > 0) {
-        setAvailableYears([currentYear, nextYear]);
+    const loadAvailableYears = async () => {
+      const yearsToCheck = [currentYear, currentYear - 1, currentYear + 1];
+      const yearsWithData = [];
+
+      for (const year of yearsToCheck) {
+        const races = await fetchRaceCalendar(year);
+        if (Array.isArray(races) && races.length > 0) {
+          yearsWithData.push(year);
+        }
+      }
+
+      if (yearsWithData.length > 0) {
+        setAvailableYears(yearsWithData);
+        if (!yearsWithData.includes(selectedYear)) {
+          setSelectedYear(yearsWithData[0]);
+        }
       } else {
         setAvailableYears([currentYear]);
       }
     };
-    checkNextYear();
+    loadAvailableYears();
   }, []);
 
   useEffect(() => {
